@@ -1,7 +1,7 @@
-# TODO coils, validate config
+# TODO validate config
 from pulr import config, register_puller, get_object_id
 from pulr.converters import (parse_int, bit_to_data, int16_to_data,
-                             int32_to_data, real32_to_data)
+                             int32_to_data, real32_to_data, value_to_data)
 
 import pymodbus.client.sync
 from functools import partial
@@ -76,7 +76,7 @@ def init(cfg_proto, cfg_pull, timeout=5):
         else:
             raise ValueError(f'Invalid register type: {reg[0]}')
         pmap = []
-        for m in p.get('map'):
+        for m in p.get('map', []):
             offset = m['offset']
             digits = m.get('digits')
             o = get_object_id(m['id'])
@@ -109,12 +109,15 @@ def init(cfg_proto, cfg_pull, timeout=5):
                         raise ValueError(f'type unsupported: {tp}')
                 else:
                     fn = partial(bit_to_data, o, offset, bit)
+            else:
+                fn = partial(value_to_data, o, offset, True)
             pmap.append(fn)
         register_puller(
             partial(process_data,
                     partial(pfn, addr, count=p.get('count', 1), unit=u),
                     ('b' if reg[0] in ['c', 'd'] else 'w')), pmap)
     client.connect()
+
 
 def shutdown():
     client.close()

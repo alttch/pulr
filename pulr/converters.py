@@ -2,6 +2,7 @@ from pulr import set_data
 
 import struct
 
+
 def parse_int(i):
     if isinstance(i, int):
         return i
@@ -10,7 +11,16 @@ def parse_int(i):
     else:
         return int(i)
 
+
 # common data postprocessors
+
+
+def value_to_data(o, offset, bool_to_int, data_in):
+    value = data_in[offset]
+    if isinstance(value, bool) and bool_to_int:
+        value = 1 if value is True else 0
+    set_data(o, value)
+
 
 def int16_to_data(o, offset, signed, multiplier, digits, data_in):
     value = data_in[offset]
@@ -45,4 +55,3 @@ def real32_to_data(o, offset, multiplier, digits, data_in):
 def bit_to_data(o, offset, bit, data_in):
     x = data_in[offset]
     set_data(o, (x >> bit) & 1)
-
