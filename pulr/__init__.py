@@ -136,54 +136,60 @@ def do(loop=False):
 
 
 def main():
-    global output
-    ap = argparse.ArgumentParser()
-    ap.add_argument('-F',
-                    '--config',
-                    help='Configuration file',
-                    metavar='CONFIG',
-                    required=True)
-    ap.add_argument('-L',
-                    '--loop',
-                    help='Loop (production)',
-                    action='store_true')
-    a = ap.parse_args()
-
-    with open(a.config) as fh:
-        config.update(yaml.safe_load(fh))
-
-    jsonschema.validate(config, CONFIG_SCHEMA)
-
-    config['interval'] = 1 / config['freq']
-
     try:
-        om = OUTPUT_METHODS[config['output']['type']]
-    except KeyError:
-        raise Exception('Unsupported output type or output type not specified')
-    jsonschema.validate(config['output'], om['config_schema'])
-    output = om['output']
-    output_params.update(config['output'])
-    send_beacon = om.get('beacon')
+        global output
+        ap = argparse.ArgumentParser()
+        ap.add_argument('-F',
+                        '--config',
+                        help='Configuration file',
+                        metavar='CONFIG',
+                        required=True)
+        ap.add_argument('-L',
+                        '--loop',
+                        help='Loop (production)',
+                        action='store_true')
+        a = ap.parse_args()
 
-    if 'timeout' not in output_params:
-        output_params['timeout'] = config['timeout']
+        with open(a.config) as fh:
+            config.update(yaml.safe_load(fh))
 
-    proto = config['proto']['name']
+        jsonschema.validate(config, CONFIG_SCHEMA)
 
-    if '/' in proto:
-        proto = proto.split('/', 1)[0]
+        config['interval'] = 1 / config['freq']
 
-    lib = importlib.import_module(f'pulr.proto.{proto}')
+        try:
+            om = OUTPUT_METHODS[config['output']['type']]
+        except KeyError:
+            raise Exception(
+                'Unsupported output type or output type not specified')
+        jsonschema.validate(config['output'], om['config_schema'])
+        output = om['output']
+        output_params.update(config['output'])
+        send_beacon = om.get('beacon')
 
-    lib.init(config['proto'], config.get('pull', []), timeout=config['timeout'])
+        if 'timeout' not in output_params:
+            output_params['timeout'] = config['timeout']
 
-    if a.loop and send_beacon:
-        threading.Thread(target=_t_beacon,
-                         name='beacon',
-                         args=(send_beacon, config['beacon']),
-                         daemon=True).start()
+        proto = config['proto']['name']
 
-    try:
-        do(loop=a.loop)
-    finally:
-        lib.shutdown()
+        if '/' in proto:
+            proto = proto.split('/', 1)[0]
+
+        lib = importlib.import_module(f'pulr.proto.{proto}')
+
+        lib.init(config['proto'],
+                 config.get('pull', []),
+                 timeout=config['timeout'])
+
+        if a.loop and send_beacon:
+            threading.Thread(target=_t_beacon,
+                             name='beacon',
+                             args=(send_beacon, config['beacon']),
+                             daemon=True).start()
+
+        try:
+            do(loop=a.loop)
+        finally:
+            lib.shutdown()
+    except KeyboardInterrupt:
+        pass
