@@ -1,4 +1,3 @@
-# TODO validate config
 from pulr import config, register_puller, get_object_id
 from pulr.converters import (parse_int, bit_to_data, int16_to_data,
                              int32_to_data, real32_to_data, value_to_data)
@@ -6,7 +5,80 @@ from pulr.converters import (parse_int, bit_to_data, int16_to_data,
 import pymodbus.client.sync
 from functools import partial
 
+import jsonschema
+
 client = None
+
+SCHEMA_PROTO = {
+    'type': 'object',
+    'properties': {
+        'name': {
+            'type': 'string',
+            'enum': ['modbus/tcp', 'modbus/udp']
+        },
+        'source': {
+            'type': 'string'
+        },
+        'default-unit': {
+            'type': ['integer', 'string']
+        }
+    },
+    'additionalProperties': False,
+    'required': ['name', 'source']
+}
+
+SCHEMA_PULL = {
+    'type': 'array',
+    'items': {
+        'type': 'object',
+        'properties': {
+            'reg': {
+                'type': 'string'
+            },
+            'count': {
+                'type': 'integer',
+                'minimum': 1
+            },
+            'unit': {
+                'type': ['integer', 'string']
+            },
+            'map': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'offset': {
+                            'type': ['integer', 'string'],
+                        },
+                        'id': {
+                            'type': 'string',
+                        },
+                        'type': {
+                            'type':
+                                'string',
+                            'enum': [
+                                'real', 'real32', 'uint16', 'word', 'uint32',
+                                'dword', 'sint16', 'int16', 'sint32', 'int32'
+                            ]
+                        },
+                        'digits': {
+                            'type': 'integer',
+                            'minimum': 0
+                        },
+                        'multiplier': {
+                            'type': 'number',
+                            'minimum': 0
+                        }
+                    },
+                    'additionalProperties': False,
+                    'required': ['offset', 'id']
+                }
+            }
+        },
+        'additionalProperties': False,
+        'required': ['reg', 'count', 'map']
+    }
+}
 
 
 def parse_offset(offset, addr):
@@ -42,6 +114,8 @@ def process_data(fn, dtype):
 
 def init(cfg_proto, cfg_pull, timeout=5):
     global client
+    jsonschema.validate(cfg_proto, SCHEMA_PROTO)
+    jsonschema.validate(cfg_pull, SCHEMA_PULL)
     if cfg_proto['name'] in ['modbus/tcp', 'modbus/udp']:
         try:
             host, port = cfg_proto['source'].rsplit(':', 1)
@@ -81,12 +155,7 @@ def init(cfg_proto, cfg_pull, timeout=5):
             digits = m.get('digits')
             o = get_object_id(m['id'])
             tp = m.get('type')
-            if tp and '*' in tp:
-                tp, multiplier = tp.split('*')
-                tp = tp.strip()
-                multiplier = float(multiplier.strip())
-            else:
-                multiplier = 1
+            multiplier = m.get('multiplier', 1)
             if reg[0] in ['h', 'i']:
                 offset, bit = parse_offset(offset, addr)
                 if bit is None:

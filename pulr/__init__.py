@@ -4,8 +4,6 @@ __license__ = 'Apache License 2.0'
 
 __version__ = '0.0.1'
 
-# TODO: validate config
-
 import sys
 import argparse
 import importlib
@@ -33,6 +31,39 @@ config = {
     'output': {
         'type': 'stdout'
     }
+}
+
+CONFIG_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'version': {
+            'type': 'integer',
+            'minimum': 1
+        },
+        'timeout': {
+            'type': 'number',
+            'minimum': 0
+        },
+        'beacon': {
+            'type': 'number',
+            'minimum': 0
+        },
+        'freq': {
+            'type': 'number',
+            'minimum': 0
+        },
+        'proto': {
+            'type': 'object'
+        },
+        'output': {
+            'type': 'object'
+        },
+        'pull': {
+            'type': 'array'
+        }
+    },
+    'additionalProperties': False,
+    'required': ['version', 'proto', 'pull']
 }
 
 output = None
@@ -121,12 +152,15 @@ def main():
     with open(a.config) as fh:
         config.update(yaml.safe_load(fh))
 
+    jsonschema.validate(config, CONFIG_SCHEMA)
+
     config['interval'] = 1 / config['freq']
 
     try:
         om = OUTPUT_METHODS[config['output']['type']]
     except KeyError:
         raise Exception('Unsupported output type or output type not specified')
+    jsonschema.validate(config['output'], om['config_schema'])
     output = om['output']
     output_params.update(config['output'])
     send_beacon = om.get('beacon')

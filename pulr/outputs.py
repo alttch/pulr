@@ -1,5 +1,4 @@
-# TODO (SNMP trap, validate output config)
-
+# TODO snmp traps
 from functools import partial
 from types import SimpleNamespace
 from .beacons import beacon_eva_datapuller
@@ -53,18 +52,55 @@ def send_beacon_eva_datapuller():
     oprint()
 
 
+SCHEMA_SHORT = {
+    'type': 'object',
+    'properties': {
+        'type': {
+            'type': 'string',
+        }
+    },
+    'additionalProperties': False,
+    'required': ['type']
+}
+
+SCHEMA_WEBHOOK = {
+    'type': 'object',
+    'properties': {
+        'type': {
+            'type': 'string'
+        },
+        'url': {
+            'type': 'string'
+        },
+        'headers': {
+            'type': 'object',
+            'patternProperties': {
+                '.*': {
+                    'type': 'string'
+                }
+            }
+        }
+    },
+    'additionalProperties': False,
+    'required': ['type', 'url']
+}
+
 OUTPUT_METHODS = {
     'stdout': {
-        'output': output_stdout
+        'output': output_stdout,
+        'config_schema': SCHEMA_SHORT
     },
     'stdout/ndjson': {
-        'output': output_stdout_ndjson
+        'output': output_stdout_ndjson,
+        'config_schema': SCHEMA_SHORT
     },
     'stdout/eva-datapuller': {
         'output': output_eva_datapuller,
-        'beacon': beacon_eva_datapuller
+        'beacon': beacon_eva_datapuller,
+        'config_schema': SCHEMA_SHORT
     },
     'webhook': {
-        'output': output_webhook
+        'output': output_webhook,
+        'config_schema': SCHEMA_WEBHOOK
     }
 }
