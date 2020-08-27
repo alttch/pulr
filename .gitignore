@@ -6,3 +6,4 @@ Makefile
 .idea/
 TODO.todo
 *.pyc
+main
