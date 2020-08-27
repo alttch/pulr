@@ -54,5 +54,4 @@ def real32_to_data(o, offset, multiplier, digits, data_in):
 
 
 def bit_to_data(o, offset, bit, data_in):
-    x = data_in[offset]
-    set_data(o, (x >> bit) & 1)
+    set_data(o, (data_in[offset] >> bit) & 1)
