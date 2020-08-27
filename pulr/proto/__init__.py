@@ -1,1 +1,1 @@
-# TODO: Logix En/IP
+# TODO: Logix En/IP, SNMP
