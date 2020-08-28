@@ -49,10 +49,10 @@ Look in ./examples for the example configurations.
 
 ## How does it work
 
-One Pulr process pulls one piece of the hardware equipment. The goal is to pull
-and process the data as fast as possible, but die as soon as any errors occur.
-Pulr is built to be started by supervisor, which collects the data from it and
-restarts the process on crashes.
+One Pulr instance pulls one piece of the hardware equipment. The goal is to
+pull and process the data as fast as possible, but die as soon as any errors
+occur. Pulr is built to be started by supervisor, which collects the data from
+it and restarts the process on crashes.
 
 But it's possible to run the tool with "-R" flag, which tells Pulr to restart
 the main loop in case of failures.
