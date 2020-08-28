@@ -39,7 +39,7 @@ OUTPUT_METHODS = {
         'output': output_stdout_ndjson,
         'beacon': beacon_empty_line
     },
-    'eva-datapuller': {
+    'eva/datapuller': {
         'output': output_eva_datapuller,
         'beacon': beacon_empty_line
     }
