@@ -1,8 +1,10 @@
+import sys
 from functools import partial
 from types import SimpleNamespace
 from .beacons import beacon_empty_line
 
 oprint = partial(print, flush=True)
+eprint = partial(print, flush=True, file=sys.stderr)
 
 _d = SimpleNamespace()
 
@@ -10,6 +12,11 @@ try:
     import rapidjson as json
 except:
     import json
+
+
+def print_trace():
+    import traceback
+    eprint(traceback.format_exc())
 
 
 def output_devnull(*args, **kwargs):

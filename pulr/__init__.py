@@ -15,7 +15,7 @@ import jsonschema
 import yaml
 
 from time import perf_counter, sleep
-from .outputs import OUTPUT_METHODS, oprint
+from .outputs import OUTPUT_METHODS, eprint, print_trace
 from queue import Queue
 
 q = Queue()
@@ -111,9 +111,7 @@ def _t_beacon(fn, interval):
             fn()
             next_beacon += interval
     except:
-        import traceback
-        oprint('beacon error', file=sys.stderr)
-        oprint(traceback.format_exc())
+        print_trace()
 
 
 def _t_processor():
@@ -126,8 +124,7 @@ def _t_processor():
             for fn in prc_map:
                 fn(data)
     except:
-        import traceback
-        oprint(traceback.format_exc(), file=sys.stderr)
+        print_trace()
 
 
 def do(loop=False):
@@ -151,7 +148,7 @@ def do(loop=False):
             if ts > 0:
                 sleep(ts)
             else:
-                oprint('WARNING: main loop timeout', file=sys.stderr)
+                eprint('WARNING: main loop timeout')
         next_iter += interval
 
     if loop:
@@ -228,8 +225,7 @@ def main():
                 break
             except:
                 if a.restart and a.loop:
-                    import traceback
-                    oprint(traceback.format_exc(), file=sys.stderr)
+                    print_trace()
                     sleep(config['interval'])
                 else:
                     raise
