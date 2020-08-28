@@ -82,7 +82,7 @@ Planned very soon:
 * multiply, divide, round
 * bit2int - convert boolean bits into integers (1/0)
 
-# Outputs
+## Output type
 
 * none or blank "output" field specified - output the data as plain text
 * ndjson - output the data newline delimited JSON
