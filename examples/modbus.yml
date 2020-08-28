@@ -23,7 +23,7 @@ pull:
     count: 2
     # process the data
     process:
-      # offset X/Y means get Yth bit of Xth byte
+      # offset X/Y means get Yth bit of Xth word
       - offset: 0/0
         # set id to bit 0/0 etc. For Modbus data, set-id is REQUIRED
         set-id: sensor:axon/din1.value
