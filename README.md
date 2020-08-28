@@ -68,7 +68,7 @@ devices can be pulled up to 50 times per second without any problem).
 Pulr code is written to be easily transformed to Rust or Golang, I plan to do
 this very soon.
 
-## What protocols are supported?
+## Protocols
 
 Currently supported:
 
@@ -79,7 +79,7 @@ Planned very soon:
 
 * Ethernet/IP (Allen Bradley ControlLogix)
 
-## What data transformers are available
+## Data transformers
 
 * speed - calculate value growing speed, useful for SNMP interface counters
 * multiply, divide, round
