@@ -13,6 +13,20 @@ def parse_int(i):
         return int(i)
 
 
+def parse_value(val):
+    try:
+        value = val.decode()
+        try:
+            value = int(value)
+            if int(value) == float(value):
+                value = int(value)
+        except:
+            pass
+    except:
+        value = '0x' + ''.join(x[2:].upper() for x in map(hex, val))
+    return value
+
+
 # common data postprocessors
 
 
