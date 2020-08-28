@@ -9,7 +9,7 @@ freq: 10
 output: ndjson
 # protocol
 proto:
-  # Modbus/TCP and UDP are supported
+  # Modbus TCP and UDP are supported
   # Modbus RTU support isn't planned, as any process locks RS485-port and you
   # can't send control commands from another one. Use TCP/IP gateways
   name: modbus/tcp
