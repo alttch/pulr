@@ -25,7 +25,7 @@ pull:
     process:
       # offset X/Y means get Yth bit of Xth word
       - offset: 0/0
-        # set id to bit 0/0 etc. For Modbus data, set-id is REQUIRED
+        # set id of bit 0/0. For Modbus data, set-id is REQUIRED
         set-id: sensor:axon/din1.value
         # by default, bits are booleans (True/False), transform to 1 / 0
         transform: &b2i
