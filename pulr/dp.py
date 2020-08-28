@@ -90,7 +90,7 @@ def transform_divide(d, tp, value):
 
 
 def transform_round(d, tp, value):
-    return round(value, d)
+    return round(value, None if d == 0 else d)
 
 
 def transform_bit_to_int(tp, value):
@@ -170,7 +170,7 @@ def real32_to_data(o, offset, transform, data_in):
 
 
 def bit_to_data(o, offset, bit, transform, data_in):
-    value = (data_in[offset] >> bit) & 1
+    value = (data_in[offset] >> bit) & 1 == 1
     if transform is not None:
         value = run_transform(transform, DATA_TYPE_BIT, value)
     set_data(o, value)
