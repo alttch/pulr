@@ -1,0 +1,100 @@
+# Modbus example, pulling data from Axon S115 PLC
+#
+version: 1
+timeout: 2
+# print empty line every 2 seconds
+beacon: 2
+# pull data from source 2 times per second
+freq: 10
+output: ndjson
+# protocol
+proto:
+  # Modbus/TCP and UDP are supported
+  # Modbus RTU support isn't planned, as any process locks RS485-port and you
+  # can't send control commands from another one. Use TCP/IP gateways
+  name: modbus/tcp
+  # Modbus host/port
+  source: 10.90.1.138:502
+  # default unit, if not specified in pool configuration
+  default-unit: 0x01
+pull:
+  # get 2 holding registers (h = holding, i = input, d = discrete, c = coils)
+  - reg: h0
+    count: 2
+    # process the data
+    process:
+      # offset X/Y means get Yth bit from Xth byte
+      - offset: 0/0
+        # set id to bit 0/0 etc. For Modbus data, set-id is REQUIRED
+        set-id: sensor:axon/din1.value
+        # by default, bits are booleans (True/False), transform to 1 or 0
+        #
+        transform: &b2i
+          - type: bit2int
+        # do the same for the rest of the bits
+      - offset: 0/1
+        set-id: sensor:axon/din2.value
+        transform: *b2i
+      - offset: 0/2
+        set-id: sensor:axon/din3.value
+        transform: *b2i
+      - offset: 0/3
+        set-id: sensor:axon/din4.value
+        transform: *b2i
+
+        # parse the second byte too
+      - offset: 1/0
+        set-id: unit:axon/dout1.status
+        transform: *b2i
+      - offset: 1/1
+        set-id: unit:axon/dout2.status
+        transform: *b2i
+      - offset: 1/2
+        set-id: unit:axon/dout3.status
+        transform: *b2i
+      - offset: 1/3
+        set-id: unit:axon/dout4.status
+        transform: *b2i
+
+  # get another 4 registers, starting from h3000
+  - reg: h3000
+    unit: 0x01
+    count: 4
+    process:
+      # it's possible =X to specify absolute offset, meaning =3000 will be
+      # offset 0 for the data block got starting from the register 3000
+      - offset: =3000
+        # convert value to real
+        # supported data types for Modbus:
+        # 
+        # real, real32 - IEEE 754 32-bit float
+        # uint16, word - unsigned 16-bit integer
+        # sint16, int16 - signed 16-bit integer
+        # uint32, dword - unsigned 32-bit integer
+        # sint32, int32 - signed 32-bit integer
+        type: real
+        set-id:  unit:axon/aout.value
+        transform:
+          # divide the value by 1000
+          - type: divide
+            divisor: 1000
+          # and round it to 9 digits after comma
+          - type: round
+            digits: 9
+      - offset: =3002
+        type: real
+        set-id:  sensor:axon/ain.value
+        # don't transform the value, output as-is
+
+  # coils are not used in Axon S115, so here they are just for example
+  - reg: c0
+    count: 10
+    process:
+      - offset: 0
+        set-id: unit:tests/u1.status
+        # coils always return boolean bits, transform them to integers if
+        # necesseary
+        transform: *b2i
+      - offset: 1
+        set-id: unit:tests/u2.status
+        transform: *b2i
