@@ -1,6 +1,7 @@
 from pulr import config, register_puller, get_object_id
 from pulr.converters import (parse_int, bit_to_data, int16_to_data,
-                             int32_to_data, real32_to_data, value_to_data)
+                             int32_to_data, real32_to_data, value_to_data,
+                             get_calc)
 
 import pymodbus.client.sync
 from functools import partial
@@ -60,6 +61,16 @@ SCHEMA_PULL = {
                                 'real', 'real32', 'uint16', 'word', 'uint32',
                                 'dword', 'sint16', 'int16', 'sint32', 'int32'
                             ]
+                        },
+                        'calc': {
+                            'type': 'object',
+                            'properties': {
+                                'type': {
+                                    'type': 'string'
+                                }
+                            },
+                            'additionalProperties': True,
+                            'required': ['type']
                         },
                         'digits': {
                             'type': 'integer',
@@ -159,6 +170,7 @@ def init(cfg_proto, cfg_pull, timeout=5):
             digits = m.get('digits')
             o = get_object_id(m['id'])
             tp = m.get('type')
+            calc = get_calc(m.get('calc'))
             multiplier = m.get('multiplier', 1)
             if 'divisor' in m:
                 if multiplier != 1:
@@ -169,25 +181,25 @@ def init(cfg_proto, cfg_pull, timeout=5):
                 if bit is None:
                     if tp in ['real', 'real32']:
                         fn = partial(real32_to_data, o, offset, multiplier,
-                                     digits)
+                                     digits, calc)
                     elif not tp or tp in ['uint16', 'word']:
                         fn = partial(int16_to_data, o, offset, False,
-                                     multiplier, digits)
+                                     multiplier, digits, calc)
                     elif tp in ['uint32', 'dword']:
                         fn = partial(int32_to_data, o, offset, False,
-                                     multiplier, digits)
+                                     multiplier, digits, calc)
                     elif tp in ['sint16', 'int16']:
                         fn = partial(int16_to_data, o, offset, True, multiplier,
-                                     digits)
+                                     digits, calc)
                     elif tp in ['sint32', 'int32']:
                         fn = partial(int32_to_data, o, offset, True, multiplier,
-                                     digits)
+                                     digits, calc)
                     else:
                         raise ValueError(f'type unsupported: {tp}')
                 else:
                     fn = partial(bit_to_data, o, offset, bit)
             else:
-                fn = partial(value_to_data, o, offset, True)
+                fn = partial(value_to_data, o, offset, True, calc)
             pmap.append(fn)
         register_puller(
             partial(process_data,

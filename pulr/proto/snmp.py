@@ -1,6 +1,5 @@
 from pulr import config, register_puller, get_object_id, set_data
-from pulr.converters import value_to_data, parse_value
-
+from pulr.converters import value_to_data, parse_value, get_calc, run_calc, DATA_TYPE_INT32, DATA_TYPE_UINT32, DATA_TYPE_UINT64
 import netsnmp
 
 from functools import partial
@@ -71,6 +70,16 @@ SCHEMA_PULL = {
                         'divisor': {
                             'type': 'number',
                             'minimum': 0
+                        },
+                        'calc': {
+                            'type': 'object',
+                            'properties': {
+                                'type': {
+                                    'type': 'string'
+                                }
+                            },
+                            'additionalProperties': True,
+                            'required': ['type']
                         }
                     },
                     'additionalProperties': False,
@@ -89,6 +98,17 @@ SCHEMA_PULL = {
     }
 }
 
+SNMP_DT = {
+    'INTEGER': DATA_TYPE_INT32,
+    'INTEGER32': DATA_TYPE_INT32,
+    'UNSIGNED32': DATA_TYPE_UINT32,
+    'COUNTER': DATA_TYPE_UINT32,
+    'COUNTER32': DATA_TYPE_UINT32,
+    'COUNTER64': DATA_TYPE_UINT64,
+    'GAUGE': DATA_TYPE_UINT32,
+    'GAUGE32': DATA_TYPE_UINT32
+}
+
 
 def process_varlist(oid_map, ignore_list, data_in):
     for v in data_in:
@@ -103,6 +123,11 @@ def process_varlist(oid_map, ignore_list, data_in):
         if m:
             if m[0]:
                 oid = m[0]
+            if m[3][0] is not None:
+                tp = SNMP_DT.get(v.type)
+                value = run_calc(oid, value, m[3], tp)
+                if value is None:
+                    return
             if m[2] is not None:
                 value = float(value) * m[2]
             if m[1] is not None:
@@ -160,7 +185,8 @@ def init(cfg_proto, cfg_pull, timeout=5):
         pmap = [
             partial(
                 process_varlist, {
-                    v['oid']: (v.get('id'), v.get('digits'), get_multiplier(v))
+                    v['oid']: (v.get('id'), v.get('digits'), get_multiplier(v),
+                               get_calc(v.get('calc')))
                     for v in p.get('map', [])
                 }, p.get('ignore', []))
         ]

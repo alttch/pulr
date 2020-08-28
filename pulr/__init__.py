@@ -24,6 +24,8 @@ DEFAULT_TIMEOUT = 5
 DEFAULT_FREQUENCY = 1
 DEFAULT_BEACON_FREQUENCY = 0
 
+last_pull_time = 0
+
 config = {
     'timeout': DEFAULT_TIMEOUT,
     'freq': DEFAULT_FREQUENCY,
@@ -86,6 +88,10 @@ def get_object_id(i):
     return o
 
 
+def get_last_pull_time():
+    return last_pull_time
+
+
 def set_data(o, value):
     current = data.get(o)
     if current != value:
@@ -116,6 +122,10 @@ def do(loop=False):
 
     def pull_and_process():
         nonlocal next_iter
+        global last_pull_time
+
+        last_pull_time = perf_counter()
+
         for plr, prc_map in pullers:
             data = plr()
             for fn in prc_map:
