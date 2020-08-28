@@ -161,8 +161,8 @@ def init(cfg_proto, cfg_pull, timeout=5):
         pmap = [
             partial(
                 process_varlist, {
-                    v['oid']: (v.get('id'),
-                               prepare_transform(v.get('id', v['oid']),
+                    v['oid']: (v.get('set-id'),
+                               prepare_transform(v.get('set-id', v['oid']),
                                                  v.get('transform')))
                     for v in p.get('process', [])
                 }, p.get('ignore', []))
