@@ -59,7 +59,7 @@ the main loop in case of failures.
 
 ## Is it fast enough?
 
-Pulr is written in Python but it's written to be fast enough (e.g. Modbus
+Pulr is written in Python, but it's written to be fast enough (e.g. Modbus
 devices can be pulled up to 50 times per second without any problem).
 
 Pulr code is written to be easily transformed to Rust or Golang, I will do it
