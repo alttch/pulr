@@ -37,6 +37,10 @@ pulr -F modbus.yml -L
 
 ```shell
 pip3 insall pulr
+# for SNMP support
+pip3 install python3-netsnmp
+# for Modbus
+pip3 install pymodbus
 ```
 
 ## Configuring
