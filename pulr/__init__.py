@@ -15,7 +15,7 @@ import jsonschema
 import yaml
 
 from time import perf_counter, sleep
-from .outputs import OUTPUT_METHODS, output_params, oprint
+from .outputs import OUTPUT_METHODS, oprint
 
 data = {}
 
@@ -32,9 +32,7 @@ config = {
     'timeout': DEFAULT_TIMEOUT,
     'freq': DEFAULT_FREQUENCY,
     'beacon': DEFAULT_BEACON_FREQUENCY,
-    'output': {
-        'type': 'stdout'
-    }
+    'output': None
 }
 
 CONFIG_SCHEMA = {
@@ -60,7 +58,7 @@ CONFIG_SCHEMA = {
             'type': 'object'
         },
         'output': {
-            'type': 'object'
+            'type': ['string', 'null']
         },
         'pull': {
             'type': 'array'
@@ -159,17 +157,12 @@ def main():
         config['interval'] = 1 / config['freq']
 
         try:
-            om = OUTPUT_METHODS[config['output']['type']]
+            om = OUTPUT_METHODS[config['output']]
         except KeyError:
             raise Exception(
                 'Unsupported output type or output type not specified')
-        jsonschema.validate(config['output'], om['config_schema'])
         output = om['output']
-        output_params.update(config['output'])
         send_beacon = om.get('beacon')
-
-        if 'timeout' not in output_params:
-            output_params['timeout'] = config['timeout']
 
         proto = config['proto']['name']
 

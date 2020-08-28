@@ -28,12 +28,7 @@ def parse_value(val):
     return value
 
 
-# common data postprocessors
-
-CALC_SPEED = 1
-CALC_MULTIPLY = 2
-CALC_DIVIDE = 3
-CALC_ROUND = 4
+# common data types
 
 MAX_INT16 = 32767
 MAX_INT32 = 2147483647
@@ -59,10 +54,12 @@ MAX_VAL = {
     DATA_TYPE_UINT64: MAX_UINT64
 }
 
+# transformers
+
 _speed_cache = {}
 
 
-def convert_speed(o, tp, interval, value):
+def transform_speed(o, interval, tp, value):
     maxval = MAX_VAL[tp]
     if o in _speed_cache:
         v_prev, ptime = _speed_cache[o]
@@ -80,87 +77,96 @@ def convert_speed(o, tp, interval, value):
     return speed
 
 
-def convert_multiply(m, value):
+def transform_multiply(m, tp, value):
     return value * m
 
 
-def convert_divide(d, value):
+def transform_divide(d, tp, value):
     return value / d
 
 
-def convert_round(d, value):
+def transform_round(d, tp, value):
     return round(value, d)
 
-def convert_bin_to_int(value):
+
+def transform_bit_to_int(tp, value):
     return 1 if value is True else 0
 
-def prepare_convert(o, convert, tp):
-    if convert is not None:
-        converts = []
-        for c in convert:
+
+def prepare_transform(o, transform):
+    if transform is not None:
+        transforms = []
+        for c in transform:
             if c['type'] == 'speed':
-                converts.append(
-                    partial(convert_speed, o, tp, c.get('interval', 1)))
+                transforms.append(
+                    partial(transform_speed, o, c.get('interval', 1)))
             elif c['type'] == 'multiply':
-                converts.append(partial(convert_multiply, c['multiplier']))
+                transforms.append(partial(transform_multiply, c['multiplier']))
             elif c['type'] == 'divide':
-                converts.append(partial(convert_divide, c['divisor']))
+                transforms.append(partial(transform_divide, c['divisor']))
             elif c['type'] == 'round':
-                converts.append(partial(convert_round, c['digits']))
-            elif c['type'] == 'bin2int':
-                converts.append(partial(convert_bin_to_int))
+                transforms.append(partial(transform_round, c['digits']))
+            elif c['type'] == 'bit2int':
+                transforms.append(partial(transform_bit_to_int))
             else:
-                raise ValueError(f'Unsupported convert {c["type"]}')
-        return converts
+                raise ValueError(f'Unsupported transform {c["type"]}')
+        return transforms
     else:
         return None
 
 
-def run_convert(convert, value):
-    for c in convert:
-        value = c(value)
+def run_transform(transform, tp, value):
+    for c in transform:
+        value = c(tp, value)
         if value is None:
             return None
     return value
 
 
-def value_to_data(o, offset, convert, data_in):
+# data conversion functions
+
+
+def value_to_data(o, offset, transform, data_in):
     value = data_in[offset]
-    if convert is not None:
-        value = run_convert(convert, value)
+    if transform is not None:
+        value = run_transform(transform, None, value)
     set_data(o, value)
 
 
-def int16_to_data(o, offset, signed, convert, data_in):
+def int16_to_data(o, offset, signed, transform, data_in):
     value = data_in[offset]
     if signed and value > MAX_INT16:
         value -= 65536
-    if convert is not None:
-        value = run_convert(convert, value)
+    if transform is not None:
+        value = run_transform(transform,
+                              DATA_TYPE_INT16 if signed else DATA_TYPE_UINT16,
+                              value)
     set_data(o, value)
 
 
-def int32_to_data(o, offset, signed, convert, data_in):
+def int32_to_data(o, offset, signed, transform, data_in):
     value = data_in[offset] * 65536 + data_in[offset + 1]
     if signed and value > MAX_INT32:
         value -= 4294967296
-    if convert is not None:
-        value = run_convert(convert, value)
+    if transform is not None:
+        value = run_transform(transform,
+                              DATA_TYPE_INT32 if signed else DATA_TYPE_UINT32,
+                              value)
     set_data(o, value)
 
 
-def real32_to_data(o, offset, convert, data_in):
+def real32_to_data(o, offset, transform, data_in):
     value = struct.unpack(
         'f',
         struct.pack('H', data_in[offset]) +
         struct.pack('H', data_in[offset + 1]))[0]
-    if convert is not None:
-        value = run_convert(convert, value)
+    if transform is not None:
+        value = run_transform(transform, DATA_TYPE_REAL32, value)
     set_data(o, value)
 
 
-def bit_to_data(o, offset, bit, convert, data_in):
+def bit_to_data(o, offset, bit, transform, data_in):
     value = (data_in[offset] >> bit) & 1
-    if convert is not None:
-        value = run_convert(convert, value)
+    if transform is not None:
+        value = run_transform(transform, DATA_TYPE_BIT, value)
     set_data(o, value)

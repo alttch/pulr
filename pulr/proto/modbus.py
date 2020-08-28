@@ -1,10 +1,9 @@
 from pulr import config, register_puller
-from pulr.converters import (parse_int, bit_to_data, int16_to_data,
-                             int32_to_data, real32_to_data, value_to_data,
-                             prepare_convert, DATA_TYPE_BIT, DATA_TYPE_INT16,
-                             DATA_TYPE_INT32, DATA_TYPE_REAL32,
-                             DATA_TYPE_UINT16, DATA_TYPE_UINT32,
-                             DATA_TYPE_UINT64)
+from pulr.dp import (parse_int, bit_to_data, int16_to_data, int32_to_data,
+                     real32_to_data, value_to_data, prepare_transform,
+                     DATA_TYPE_BIT, DATA_TYPE_INT16, DATA_TYPE_INT32,
+                     DATA_TYPE_REAL32, DATA_TYPE_UINT16, DATA_TYPE_UINT32,
+                     DATA_TYPE_UINT64)
 
 import pymodbus.client.sync
 from functools import partial
@@ -65,7 +64,7 @@ SCHEMA_PULL = {
                                 'dword', 'sint16', 'int16', 'sint32', 'int32'
                             ]
                         },
-                        'convert': {
+                        'transform': {
                             'type': 'array'
                         }
                     },
@@ -154,38 +153,34 @@ def init(cfg_proto, cfg_pull, timeout=5):
             digits = m.get('digits')
             o = m['set-id']
             tp = m.get('type')
-            convert = m.get('convert')
+            transform = m.get('transform')
             if reg[0] in ['h', 'i']:
                 offset, bit = parse_offset(offset, addr)
                 if bit is None:
                     if tp in ['real', 'real32']:
-                        fn = partial(
-                            real32_to_data, o, offset,
-                            prepare_convert(o, convert, DATA_TYPE_REAL32))
+                        fn = partial(real32_to_data, o, offset,
+                                     prepare_transform(o, transform))
                     elif not tp or tp in ['uint16', 'word']:
-                        fn = partial(
-                            int16_to_data, o, offset, False,
-                            prepare_convert(o, convert, DATA_TYPE_UINT16))
+                        fn = partial(int16_to_data, o, offset, False,
+                                     prepare_transform(o, transform))
                     elif tp in ['uint32', 'dword']:
-                        fn = partial(
-                            int32_to_data, o, offset, False, multiplier, digits,
-                            prepare_convert(o, convert, DATA_TYPE_UINT32))
+                        fn = partial(int32_to_data, o, offset, False,
+                                     multiplier, digits,
+                                     prepare_transform(o, transform))
                     elif tp in ['sint16', 'int16']:
-                        fn = partial(
-                            int16_to_data, o, offset, True,
-                            prepare_convert(o, convert, DATA_TYPE_INT16))
+                        fn = partial(int16_to_data, o, offset, True,
+                                     prepare_transform(o, transform))
                     elif tp in ['sint32', 'int32']:
-                        fn = partial(
-                            int32_to_data, o, offset, True,
-                            prepare_convert(o, convert, DATA_TYPE_INT32))
+                        fn = partial(int32_to_data, o, offset, True,
+                                     prepare_transform(o, transform))
                     else:
                         raise ValueError(f'type unsupported: {tp}')
                 else:
                     fn = partial(bit_to_data, o, offset, bit,
-                                 prepare_convert(o, convert, DATA_TYPE_BIT))
+                                 prepare_transform(o, transform))
             else:
                 fn = partial(value_to_data, o, offset,
-                             prepare_convert(o, convert, DATA_TYPE_BIT))
+                             prepare_transform(o, transform))
             pmap.append(fn)
         register_puller(
             partial(process_data,

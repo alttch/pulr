@@ -4,8 +4,6 @@ from .beacons import beacon_empty_line
 
 oprint = partial(print, flush=True)
 
-output_params = {}
-
 _d = SimpleNamespace()
 
 
@@ -28,31 +26,17 @@ def output_eva_datapuller(o, value):
     oprint(s + (f'None {value}' if val_mode else str(value)))
 
 
-SCHEMA_SHORT = {
-    'type': 'object',
-    'properties': {
-        'type': {
-            'type': 'string',
-        }
-    },
-    'additionalProperties': False,
-    'required': ['type']
-}
-
 OUTPUT_METHODS = {
-    'stdout': {
+    None: {
         'output': output_stdout,
-        'beacon': beacon_empty_line,
-        'config_schema': SCHEMA_SHORT
+        'beacon': beacon_empty_line
     },
     'ndjson': {
         'output': output_stdout_ndjson,
-        'beacon': beacon_empty_line,
-        'config_schema': SCHEMA_SHORT
+        'beacon': beacon_empty_line
     },
     'eva-datapuller': {
         'output': output_eva_datapuller,
-        'beacon': beacon_empty_line,
-        'config_schema': SCHEMA_SHORT
+        'beacon': beacon_empty_line
     }
 }
