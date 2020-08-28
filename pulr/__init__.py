@@ -29,14 +29,14 @@ processor_maps = []
 
 DEFAULT_TIMEOUT = 5
 DEFAULT_FREQUENCY = 1
-DEFAULT_BEACON_FREQUENCY = 0
+DEFAULT_BEACON_INTERVAL = 0
 
 last_pull_time = 0
 
 config = {
     'timeout': DEFAULT_TIMEOUT,
     'freq': DEFAULT_FREQUENCY,
-    'beacon': DEFAULT_BEACON_FREQUENCY,
+    'beacon': DEFAULT_BEACON_INTERVAL,
     'output': None
 }
 
