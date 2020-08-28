@@ -13,7 +13,7 @@ into databases etc.
 Before the output, any data part can be transformed: converted, divided,
 multiplied, rounded and so on.
 
-The data can be output as plain text or as nd-json.
+The data can be outputted as plain text or as nd-json.
 
 ```shell
 pulr -F modbus.yml -L
