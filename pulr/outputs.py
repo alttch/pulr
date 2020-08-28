@@ -1,4 +1,4 @@
-# TODO snmp traps
+# TODO snmp traps, InfluxDB
 from functools import partial
 from types import SimpleNamespace
 from .beacons import beacon_eva_datapuller
