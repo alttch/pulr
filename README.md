@@ -6,7 +6,7 @@ Pulr is a small command-line tool, which can pull data from the device and
 convert it into events. Meaning the data is output ONLY when it's changed.
 
 The data is always being output to STDOUT, you can just grep it or use any
-pipeline processor (I use vector: https://vector.dev/) to push it via HTTP,
+pipeline processor (I use [vector](https://vector.dev/) to push it via HTTP,
 into databases etc.
 
 Before the output, any data part can be transformed: converted, divided,
@@ -81,6 +81,12 @@ Planned very soon:
 * speed - calculate value growing speed, useful for SNMP interface counters
 * multiply, divide, round
 * bit2int - convert boolean bits into integers (1/0)
+
+# Outputs
+
+* none or blank "output" field specified - output the data as plain text
+* ndjson - output the data newline delimited JSON
+* eva-datapuller - specific type for [EVA ICS](https://www.eva-ics.com/)
 
 ## Bugs, feature requests, patches
 
