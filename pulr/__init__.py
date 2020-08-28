@@ -79,6 +79,14 @@ def get_last_pull_time():
     return last_pull_time
 
 
+def clear():
+    data.clear()
+    pullers.clear()
+    processor_maps.clear()
+    from .dp import clear
+    dp.clear()
+
+
 def set_data(o, value):
     if value is None:
         return
@@ -135,55 +143,69 @@ def do(loop=False):
 
 
 def main():
+    global output
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-F',
+                    '--config',
+                    help='Configuration file',
+                    metavar='CONFIG',
+                    required=True)
+    ap.add_argument('-L',
+                    '--loop',
+                    help='Loop (production)',
+                    action='store_true')
+    ap.add_argument('-R',
+                    '--restart',
+                    help='Auto restart loop on errors',
+                    action='store_true')
+    a = ap.parse_args()
+
+    with open(a.config) as fh:
+        config.update(yaml.safe_load(fh))
+
+    jsonschema.validate(config, CONFIG_SCHEMA)
+
+    config['interval'] = 1 / config['freq']
+
     try:
-        global output
-        ap = argparse.ArgumentParser()
-        ap.add_argument('-F',
-                        '--config',
-                        help='Configuration file',
-                        metavar='CONFIG',
-                        required=True)
-        ap.add_argument('-L',
-                        '--loop',
-                        help='Loop (production)',
-                        action='store_true')
-        a = ap.parse_args()
+        om = OUTPUT_METHODS[config['output']]
+    except KeyError:
+        raise Exception('Unsupported output type or output type not specified')
+    output = om['output']
+    send_beacon = om.get('beacon')
 
-        with open(a.config) as fh:
-            config.update(yaml.safe_load(fh))
+    proto = config['proto']['name']
 
-        jsonschema.validate(config, CONFIG_SCHEMA)
+    if '/' in proto:
+        proto = proto.split('/', 1)[0]
 
-        config['interval'] = 1 / config['freq']
+    lib = importlib.import_module(f'pulr.proto.{proto}')
 
+    if a.loop and send_beacon and config['beacon']:
+        threading.Thread(target=_t_beacon,
+                         name='beacon',
+                         args=(send_beacon, config['beacon']),
+                         daemon=True).start()
+
+    while True:
+        clear()
         try:
-            om = OUTPUT_METHODS[config['output']]
-        except KeyError:
-            raise Exception(
-                'Unsupported output type or output type not specified')
-        output = om['output']
-        send_beacon = om.get('beacon')
+            lib.init(config['proto'],
+                     config.get('pull', []),
+                     timeout=config['timeout'])
 
-        proto = config['proto']['name']
-
-        if '/' in proto:
-            proto = proto.split('/', 1)[0]
-
-        lib = importlib.import_module(f'pulr.proto.{proto}')
-
-        lib.init(config['proto'],
-                 config.get('pull', []),
-                 timeout=config['timeout'])
-
-        if a.loop and send_beacon and config['beacon']:
-            threading.Thread(target=_t_beacon,
-                             name='beacon',
-                             args=(send_beacon, config['beacon']),
-                             daemon=True).start()
-
-        try:
-            do(loop=a.loop)
-        finally:
-            lib.shutdown()
-    except KeyboardInterrupt:
-        pass
+            try:
+                do(loop=a.loop)
+            finally:
+                lib.shutdown()
+            if not a.loop:
+                break
+        except KeyboardInterrupt:
+            break
+        except:
+            if a.restart and a.loop:
+                import traceback
+                oprint(traceback.format_exc(), file=sys.stderr)
+                sleep(config['interval'])
+            else:
+                raise

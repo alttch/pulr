@@ -58,6 +58,8 @@ MAX_VAL = {
 
 _speed_cache = {}
 
+def clear():
+    _speed_cache.clear()
 
 def transform_speed(o, interval, tp, value):
     maxval = MAX_VAL[tp]
