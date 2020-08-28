@@ -41,6 +41,8 @@ pip3 insall pulr
 pip3 install python3-netsnmp
 # for Modbus
 pip3 install pymodbus
+# optionally, install rapidjson to make JSON output faster
+pip3 install python-rapidjson
 ```
 
 ## Configuring
