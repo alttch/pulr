@@ -175,7 +175,7 @@ def main():
                     help='Loop (production)',
                     action='store_true')
     ap.add_argument('-R',
-                    '--restart',
+                    '--auto-restart',
                     help='Auto restart loop on errors',
                     action='store_true')
     a = ap.parse_args()
