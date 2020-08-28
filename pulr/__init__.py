@@ -16,6 +16,11 @@ import yaml
 
 from time import perf_counter, sleep
 from .outputs import OUTPUT_METHODS, oprint
+from queue import Queue
+
+q = Queue()
+
+processor = None
 
 data = {}
 
@@ -111,6 +116,20 @@ def _t_beacon(fn, interval):
         oprint(traceback.format_exc())
 
 
+def _t_processor():
+    try:
+        while True:
+            try:
+                data, prc_map = q.get()
+            except TypeError:
+                break
+            for fn in prc_map:
+                fn(data)
+    except:
+        import traceback
+        oprint(traceback.format_exc(), file=sys.stderr)
+
+
 def do(loop=False):
 
     interval = config['interval']
@@ -124,9 +143,9 @@ def do(loop=False):
         last_pull_time = perf_counter()
 
         for plr, prc_map in pullers:
-            data = plr()
-            for fn in prc_map:
-                fn(data)
+            q.put((plr(), prc_map))
+        if not processor.is_alive():
+            raise RuntimeError('processor thread is gone')
         ts = next_iter - perf_counter()
         if loop:
             if ts > 0:
@@ -144,6 +163,7 @@ def do(loop=False):
 
 def main():
     global output
+    global processor
     ap = argparse.ArgumentParser()
     ap.add_argument('-F',
                     '--config',
@@ -189,23 +209,29 @@ def main():
 
     while True:
         clear()
+        if processor is None or not processor.is_alive():
+            processor = threading.Thread(target=_t_processor, name='processor')
         try:
-            lib.init(config['proto'],
-                     config.get('pull', []),
-                     timeout=config['timeout'])
-
+            processor.start()
             try:
-                do(loop=a.loop)
-            finally:
-                lib.shutdown()
-            if not a.loop:
+                lib.init(config['proto'],
+                         config.get('pull', []),
+                         timeout=config['timeout'])
+
+                try:
+                    do(loop=a.loop)
+                finally:
+                    lib.shutdown()
+                if not a.loop:
+                    break
+            except KeyboardInterrupt:
                 break
-        except KeyboardInterrupt:
-            break
-        except:
-            if a.restart and a.loop:
-                import traceback
-                oprint(traceback.format_exc(), file=sys.stderr)
-                sleep(config['interval'])
-            else:
-                raise
+            except:
+                if a.restart and a.loop:
+                    import traceback
+                    oprint(traceback.format_exc(), file=sys.stderr)
+                    sleep(config['interval'])
+                else:
+                    raise
+        finally:
+            q.put(None)
