@@ -1,5 +1,7 @@
-from pulr import config, register_puller, get_object_id, set_data
-from pulr.converters import value_to_data, parse_value, get_calc, run_calc, DATA_TYPE_INT32, DATA_TYPE_UINT32, DATA_TYPE_UINT64
+from pulr import config, register_puller, set_data
+from pulr.dp import (value_to_data, parse_value, prepare_transform,
+                     run_transform, DATA_TYPE_INT32, DATA_TYPE_UINT32,
+                     DATA_TYPE_UINT64)
 import netsnmp
 
 from functools import partial
@@ -45,7 +47,7 @@ SCHEMA_PULL = {
                     'type': 'string'
                 }
             },
-            'map': {
+            'process': {
                 'type': 'array',
                 'items': {
                     'type': 'object',
@@ -56,30 +58,11 @@ SCHEMA_PULL = {
                         'oid': {
                             'type': 'string',
                         },
-                        'id': {
+                        'set-id': {
                             'type': 'string',
                         },
-                        'digits': {
-                            'type': 'integer',
-                            'minimum': 0
-                        },
-                        'multiplier': {
-                            'type': 'number',
-                            'minimum': 0
-                        },
-                        'divisor': {
-                            'type': 'number',
-                            'minimum': 0
-                        },
-                        'calc': {
-                            'type': 'object',
-                            'properties': {
-                                'type': {
-                                    'type': 'string'
-                                }
-                            },
-                            'additionalProperties': True,
-                            'required': ['type']
+                        'transform': {
+                            'type': 'array'
                         }
                     },
                     'additionalProperties': False,
@@ -123,15 +106,8 @@ def process_varlist(oid_map, ignore_list, data_in):
         if m:
             if m[0]:
                 oid = m[0]
-            if m[3][0] is not None:
-                tp = SNMP_DT.get(v.type)
-                value = run_calc(oid, value, m[3], tp)
-                if value is None:
-                    return
-            if m[2] is not None:
-                value = float(value) * m[2]
             if m[1] is not None:
-                value = round(float(value), m[1])
+                value = run_transform(m[1], SNMP_DT.get(v.type), value)
         set_data(oid, value)
 
 
@@ -185,9 +161,10 @@ def init(cfg_proto, cfg_pull, timeout=5):
         pmap = [
             partial(
                 process_varlist, {
-                    v['oid']: (v.get('id'), v.get('digits'), get_multiplier(v),
-                               get_calc(v.get('calc')))
-                    for v in p.get('map', [])
+                    v['oid']: (v.get('id'),
+                               prepare_transform(v.get('id', v['oid']),
+                                                 v.get('transform')))
+                    for v in p.get('process', [])
                 }, p.get('ignore', []))
         ]
         register_puller(pfn, pmap)
