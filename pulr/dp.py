@@ -58,8 +58,10 @@ MAX_VAL = {
 
 _speed_cache = {}
 
+
 def clear():
     _speed_cache.clear()
+
 
 def transform_speed(o, interval, tp, value):
     maxval = MAX_VAL[tp]
@@ -92,7 +94,7 @@ def transform_round(d, tp, value):
 
 
 def transform_bit_to_int(tp, value):
-    return 1 if value is True else 0
+    return 1 if value else 0
 
 
 def prepare_transform(o, transform):
