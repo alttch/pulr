@@ -54,7 +54,7 @@ pull:
           # instead of value itself, measure its growing speed (here - calc
           # bandwidth)
           - type: speed
-            # calculate 1-second speed to avoid zero values
+          # calculate 1-second speed to avoid zero values
             interval: 1
           # multiply by 8 to get bits
           - type: multiply
