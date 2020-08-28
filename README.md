@@ -62,8 +62,8 @@ the main loop in case of failures.
 Pulr is written in Python, but it's written to be fast enough (e.g. Modbus
 devices can be pulled up to 50 times per second without any problem).
 
-Pulr code is written to be easily transformed to Rust or Golang, I will do it
-if the project will be successful enough.
+Pulr code is written to be easily transformed to Rust or Golang, I plan to do
+this very soon.
 
 ## What protocols are supported?
 
