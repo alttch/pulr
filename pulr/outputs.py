@@ -44,8 +44,9 @@ def output_webhook(o, value):
 
 
 def output_eva_datapuller(o, value):
-    s = f'{o[0]} u '
-    oprint(s + (str(value) if o[1] == 's' else f'None {value}'))
+    val_mode = o.endswith('.value')
+    s = f'{o[:-6 if val_mode else -7]} u '
+    oprint(s + (f'None {value}' if val_mode else str(value)))
 
 
 def send_beacon_eva_datapuller():

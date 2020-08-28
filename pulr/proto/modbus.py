@@ -1,7 +1,10 @@
-from pulr import config, register_puller, get_object_id
+from pulr import config, register_puller
 from pulr.converters import (parse_int, bit_to_data, int16_to_data,
                              int32_to_data, real32_to_data, value_to_data,
-                             get_calc)
+                             prepare_convert, DATA_TYPE_BIT, DATA_TYPE_INT16,
+                             DATA_TYPE_INT32, DATA_TYPE_REAL32,
+                             DATA_TYPE_UINT16, DATA_TYPE_UINT32,
+                             DATA_TYPE_UINT64)
 
 import pymodbus.client.sync
 from functools import partial
@@ -43,7 +46,7 @@ SCHEMA_PULL = {
             'unit': {
                 'type': ['integer', 'string']
             },
-            'map': {
+            'process': {
                 'type': 'array',
                 'items': {
                     'type': 'object',
@@ -51,7 +54,7 @@ SCHEMA_PULL = {
                         'offset': {
                             'type': ['integer', 'string'],
                         },
-                        'id': {
+                        'set-id': {
                             'type': 'string',
                         },
                         'type': {
@@ -62,36 +65,17 @@ SCHEMA_PULL = {
                                 'dword', 'sint16', 'int16', 'sint32', 'int32'
                             ]
                         },
-                        'calc': {
-                            'type': 'object',
-                            'properties': {
-                                'type': {
-                                    'type': 'string'
-                                }
-                            },
-                            'additionalProperties': True,
-                            'required': ['type']
-                        },
-                        'digits': {
-                            'type': 'integer',
-                            'minimum': 0
-                        },
-                        'multiplier': {
-                            'type': 'number',
-                            'minimum': 0
-                        },
-                        'divisor': {
-                            'type': 'number',
-                            'minimum': 0
+                        'convert': {
+                            'type': 'array'
                         }
                     },
                     'additionalProperties': False,
-                    'required': ['offset', 'id']
+                    'required': ['offset', 'set-id']
                 }
             }
         },
         'additionalProperties': False,
-        'required': ['reg', 'count', 'map']
+        'required': ['reg', 'count', 'process']
     }
 }
 
@@ -165,41 +149,43 @@ def init(cfg_proto, cfg_pull, timeout=5):
         else:
             raise ValueError(f'Invalid register type: {reg[0]}')
         pmap = []
-        for m in p.get('map', []):
+        for m in p.get('process', []):
             offset = m['offset']
             digits = m.get('digits')
-            o = get_object_id(m['id'])
+            o = m['set-id']
             tp = m.get('type')
-            calc = get_calc(m.get('calc'))
-            multiplier = m.get('multiplier', 1)
-            if 'divisor' in m:
-                if multiplier != 1:
-                    raise ValueError('both divisor and multiplier specified')
-                multiplier = 1 / m['divisor']
+            convert = m.get('convert')
             if reg[0] in ['h', 'i']:
                 offset, bit = parse_offset(offset, addr)
                 if bit is None:
                     if tp in ['real', 'real32']:
-                        fn = partial(real32_to_data, o, offset, multiplier,
-                                     digits, calc)
+                        fn = partial(
+                            real32_to_data, o, offset,
+                            prepare_convert(o, convert, DATA_TYPE_REAL32))
                     elif not tp or tp in ['uint16', 'word']:
-                        fn = partial(int16_to_data, o, offset, False,
-                                     multiplier, digits, calc)
+                        fn = partial(
+                            int16_to_data, o, offset, False,
+                            prepare_convert(o, convert, DATA_TYPE_UINT16))
                     elif tp in ['uint32', 'dword']:
-                        fn = partial(int32_to_data, o, offset, False,
-                                     multiplier, digits, calc)
+                        fn = partial(
+                            int32_to_data, o, offset, False, multiplier, digits,
+                            prepare_convert(o, convert, DATA_TYPE_UINT32))
                     elif tp in ['sint16', 'int16']:
-                        fn = partial(int16_to_data, o, offset, True, multiplier,
-                                     digits, calc)
+                        fn = partial(
+                            int16_to_data, o, offset, True,
+                            prepare_convert(o, convert, DATA_TYPE_INT16))
                     elif tp in ['sint32', 'int32']:
-                        fn = partial(int32_to_data, o, offset, True, multiplier,
-                                     digits, calc)
+                        fn = partial(
+                            int32_to_data, o, offset, True,
+                            prepare_convert(o, convert, DATA_TYPE_INT32))
                     else:
                         raise ValueError(f'type unsupported: {tp}')
                 else:
-                    fn = partial(bit_to_data, o, offset, bit)
+                    fn = partial(bit_to_data, o, offset, bit,
+                                 prepare_convert(o, convert, DATA_TYPE_BIT))
             else:
-                fn = partial(value_to_data, o, offset, True, calc)
+                fn = partial(value_to_data, o, offset,
+                             prepare_convert(o, convert, DATA_TYPE_BIT))
             pmap.append(fn)
         register_puller(
             partial(process_data,

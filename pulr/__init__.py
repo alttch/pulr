@@ -1,3 +1,5 @@
+# TODO tests
+
 __author__ = 'Altertech, https://www.altertech.com/'
 __copyright__ = 'Copyright (C) 2020 Altertech'
 __license__ = 'Apache License 2.0'
@@ -75,24 +77,13 @@ def register_puller(fn, pmap=[]):
     pullers.append((fn, pmap))
 
 
-def get_object_id(i):
-    if config['output']['type'] == 'stdout/eva-datapuller':
-        o = i.rsplit('.', 1)
-        if o[1] == 'status':
-            o[1] = 's'
-        elif o[1] == 'value':
-            o[1] = 'v'
-        o = tuple(o)
-    else:
-        o = i
-    return o
-
-
 def get_last_pull_time():
     return last_pull_time
 
 
 def set_data(o, value):
+    if value is None:
+        return
     current = data.get(o)
     if current != value:
         data[o] = value
