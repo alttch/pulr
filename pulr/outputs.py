@@ -6,6 +6,11 @@ oprint = partial(print, flush=True)
 
 _d = SimpleNamespace()
 
+try:
+    import rapidjson as json
+except:
+    import json
+
 
 def output_devnull(*args, **kwargs):
     pass
@@ -16,8 +21,7 @@ def output_stdout(o, value):
 
 
 def output_stdout_ndjson(o, value):
-    q = '' if isinstance(value, int) or isinstance(value, float) else '"'
-    oprint(f'{{"id":"{o}","v":{q}{value}{q}}}')
+    oprint(json.dumps({'id': o, 'v': value}))
 
 
 def output_eva_datapuller(o, value):
