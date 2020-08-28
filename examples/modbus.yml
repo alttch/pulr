@@ -61,8 +61,8 @@ pull:
     unit: 0x01
     count: 4
     process:
-      # it's possible =X to specify absolute offset, meaning =3000 will be
-      # offset 0 for the data block got starting from the register 3000
+      # it's possible to use =X to specify absolute offset, meaning =3000 will
+      # be offset 0 for the data block got starting from the register 3000
       - offset: =3000
         # convert value to real
         # supported data types for Modbus:
