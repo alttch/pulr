@@ -1,7 +1,5 @@
 from pulr import set_data, get_last_pull_time
 
-import struct
-
 from functools import partial
 
 
@@ -12,20 +10,6 @@ def parse_int(i):
         return int(i, 16)
     else:
         return int(i)
-
-
-def parse_value(val):
-    try:
-        value = val.decode()
-        try:
-            value = int(value)
-            if int(value) == float(value):
-                value = int(value)
-        except:
-            pass
-    except:
-        value = '0x' + ''.join(x[2:].upper() for x in map(hex, val))
-    return value
 
 
 # common data types
@@ -126,51 +110,3 @@ def run_transform(transform, tp, value):
             return None
     return value
 
-
-# data conversion functions
-
-
-def value_to_data(o, offset, transform, data_in):
-    value = data_in[offset]
-    if transform is not None:
-        value = run_transform(transform, None, value)
-    set_data(o, value)
-
-
-def int16_to_data(o, offset, signed, transform, data_in):
-    value = data_in[offset]
-    if signed and value > MAX_INT16:
-        value -= 65536
-    if transform is not None:
-        value = run_transform(transform,
-                              DATA_TYPE_INT16 if signed else DATA_TYPE_UINT16,
-                              value)
-    set_data(o, value)
-
-
-def int32_to_data(o, offset, signed, transform, data_in):
-    value = data_in[offset] * 65536 + data_in[offset + 1]
-    if signed and value > MAX_INT32:
-        value -= 4294967296
-    if transform is not None:
-        value = run_transform(transform,
-                              DATA_TYPE_INT32 if signed else DATA_TYPE_UINT32,
-                              value)
-    set_data(o, value)
-
-
-def real32_to_data(o, offset, transform, data_in):
-    value = struct.unpack(
-        'f',
-        struct.pack('H', data_in[offset]) +
-        struct.pack('H', data_in[offset + 1]))[0]
-    if transform is not None:
-        value = run_transform(transform, DATA_TYPE_REAL32, value)
-    set_data(o, value)
-
-
-def bit_to_data(o, offset, bit, transform, data_in):
-    value = (data_in[offset] >> bit) & 1 == 1
-    if transform is not None:
-        value = run_transform(transform, DATA_TYPE_BIT, value)
-    set_data(o, value)

@@ -1,5 +1,5 @@
 from pulr import config, register_puller, set_data
-from pulr.dp import (value_to_data, parse_value, prepare_transform,
+from pulr.dp import (prepare_transform,
                      run_transform, DATA_TYPE_INT32, DATA_TYPE_UINT32,
                      DATA_TYPE_UINT64)
 import netsnmp
@@ -92,6 +92,18 @@ SNMP_DT = {
     'GAUGE32': DATA_TYPE_UINT32
 }
 
+def parse_value(val):
+    try:
+        value = val.decode()
+        try:
+            value = int(value)
+            if int(value) == float(value):
+                value = int(value)
+        except:
+            pass
+    except:
+        value = '0x' + ''.join(x[2:].upper() for x in map(hex, val))
+    return value
 
 def process_varlist(oid_map, ignore_list, data_in):
     for v in data_in:

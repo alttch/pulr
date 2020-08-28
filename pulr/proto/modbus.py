@@ -1,13 +1,14 @@
-from pulr import config, register_puller
-from pulr.dp import (parse_int, bit_to_data, int16_to_data, int32_to_data,
-                     real32_to_data, value_to_data, prepare_transform,
-                     DATA_TYPE_BIT, DATA_TYPE_INT16, DATA_TYPE_INT32,
-                     DATA_TYPE_REAL32, DATA_TYPE_UINT16, DATA_TYPE_UINT32,
-                     DATA_TYPE_UINT64)
+from pulr import config, register_puller, set_data
+
+from pulr.dp import (parse_int, prepare_transform, run_transform, DATA_TYPE_BIT,
+                     DATA_TYPE_INT16, DATA_TYPE_INT32, DATA_TYPE_REAL32,
+                     DATA_TYPE_UINT16, DATA_TYPE_UINT32, DATA_TYPE_UINT64,
+                     MAX_INT16, MAX_INT32)
+
+from functools import partial
+import struct
 
 import pymodbus.client.sync
-from functools import partial
-
 import jsonschema
 
 client = None
@@ -77,6 +78,54 @@ SCHEMA_PULL = {
         'required': ['reg', 'count', 'process']
     }
 }
+
+# data conversion functions
+
+
+def value_to_data(o, offset, transform, data_in):
+    value = data_in[offset]
+    if transform is not None:
+        value = run_transform(transform, None, value)
+    set_data(o, value)
+
+
+def int16_to_data(o, offset, signed, transform, data_in):
+    value = data_in[offset]
+    if signed and value > MAX_INT16:
+        value -= 65536
+    if transform is not None:
+        value = run_transform(transform,
+                              DATA_TYPE_INT16 if signed else DATA_TYPE_UINT16,
+                              value)
+    set_data(o, value)
+
+
+def int32_to_data(o, offset, signed, transform, data_in):
+    value = data_in[offset] * 65536 + data_in[offset + 1]
+    if signed and value > MAX_INT32:
+        value -= 4294967296
+    if transform is not None:
+        value = run_transform(transform,
+                              DATA_TYPE_INT32 if signed else DATA_TYPE_UINT32,
+                              value)
+    set_data(o, value)
+
+
+def real32_to_data(o, offset, transform, data_in):
+    value = struct.unpack(
+        'f',
+        struct.pack('H', data_in[offset]) +
+        struct.pack('H', data_in[offset + 1]))[0]
+    if transform is not None:
+        value = run_transform(transform, DATA_TYPE_REAL32, value)
+    set_data(o, value)
+
+
+def bit_to_data(o, offset, bit, transform, data_in):
+    value = (data_in[offset] >> bit) & 1 == 1
+    if transform is not None:
+        value = run_transform(transform, DATA_TYPE_BIT, value)
+    set_data(o, value)
 
 
 def parse_offset(offset, addr):
@@ -150,7 +199,6 @@ def init(cfg_proto, cfg_pull, timeout=5):
         pmap = []
         for m in p.get('process', []):
             offset = m['offset']
-            digits = m.get('digits')
             o = m['set-id']
             tp = m.get('type')
             transform = m.get('transform')
@@ -165,7 +213,6 @@ def init(cfg_proto, cfg_pull, timeout=5):
                                      prepare_transform(o, transform))
                     elif tp in ['uint32', 'dword']:
                         fn = partial(int32_to_data, o, offset, False,
-                                     multiplier, digits,
                                      prepare_transform(o, transform))
                     elif tp in ['sint16', 'int16']:
                         fn = partial(int16_to_data, o, offset, True,
