@@ -32,8 +32,15 @@ def output_stdout_ndjson(o, value):
 
 
 def output_eva_datapuller(o, value):
-    val_mode = o.endswith('.value')
-    s = f'{o[:-6 if val_mode else -7]} u '
+    if o.endswith('.value'):
+        s = f'{o[:-6]} u '
+        val_mode = True
+    elif o.endswith('.status'):
+        s = f'{o[:-7]} u '
+        val_mode = False
+    else:
+        s = f'{o} u '
+        val_mode = True
     oprint(s + (f'None {value}' if val_mode else str(value)))
 
 
