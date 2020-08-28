@@ -67,5 +67,5 @@ pull:
             digits: 1
       - oid: ifInOctets.16
         set-id: Pub-in
-        # use the same YAML anchor to transfor the interface data
+        # use the same YAML anchor to transform the interface data
         transform: *if

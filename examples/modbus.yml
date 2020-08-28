@@ -15,7 +15,7 @@ proto:
   name: modbus/tcp
   # Modbus host/port
   source: 10.90.1.138:502
-  # default unit, if not specified in pool configuration
+  # default unit, if not specified in pull configs
   default-unit: 0x01
 pull:
   # get 2 holding registers (h = holding, i = input, d = discrete, c = coils)
@@ -23,7 +23,7 @@ pull:
     count: 2
     # process the data
     process:
-      # offset X/Y means get Yth bit from Xth byte
+      # offset X/Y means get Yth bit of Xth byte
       - offset: 0/0
         # set id to bit 0/0 etc. For Modbus data, set-id is REQUIRED
         set-id: sensor:axon/din1.value
