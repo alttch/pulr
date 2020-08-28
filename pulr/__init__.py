@@ -224,7 +224,7 @@ def main():
             except KeyboardInterrupt:
                 break
             except:
-                if a.restart and a.loop:
+                if a.auto_restart and a.loop:
                     print_trace()
                     sleep(config['interval'])
                 else:
