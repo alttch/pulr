@@ -68,6 +68,10 @@ SCHEMA_PULL = {
                         'multiplier': {
                             'type': 'number',
                             'minimum': 0
+                        },
+                        'divisor': {
+                            'type': 'number',
+                            'minimum': 0
                         }
                     },
                     'additionalProperties': False,
@@ -156,6 +160,10 @@ def init(cfg_proto, cfg_pull, timeout=5):
             o = get_object_id(m['id'])
             tp = m.get('type')
             multiplier = m.get('multiplier', 1)
+            if 'divisor' in m:
+                if multiplier != 1:
+                    raise ValueError('both divisor and multiplier specified')
+                multiplier = 1 / m['divisor']
             if reg[0] in ['h', 'i']:
                 offset, bit = parse_offset(offset, addr)
                 if bit is None:
