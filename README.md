@@ -85,7 +85,7 @@ Planned very soon:
 ## Output type
 
 * none or blank "output" field specified - output the data as plain text
-* ndjson - output the data newline delimited JSON
+* ndjson - output the data as newline delimited JSON
 * eva/datapuller - specific type for [EVA ICS](https://www.eva-ics.com/)
 
 ## Bugs, feature requests, patches
