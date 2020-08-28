@@ -1,7 +1,7 @@
 # TODO snmp traps, InfluxDB
 from functools import partial
 from types import SimpleNamespace
-from .beacons import beacon_eva_datapuller
+from .beacons import beacon_empty_line
 
 oprint = partial(print, flush=True)
 
@@ -88,15 +88,17 @@ SCHEMA_WEBHOOK = {
 OUTPUT_METHODS = {
     'stdout': {
         'output': output_stdout,
+        'beacon': beacon_empty_line,
         'config_schema': SCHEMA_SHORT
     },
     'stdout/ndjson': {
         'output': output_stdout_ndjson,
+        'beacon': beacon_empty_line,
         'config_schema': SCHEMA_SHORT
     },
     'stdout/eva-datapuller': {
         'output': output_eva_datapuller,
-        'beacon': beacon_eva_datapuller,
+        'beacon': beacon_empty_line,
         'config_schema': SCHEMA_SHORT
     },
     'webhook': {

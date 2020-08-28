@@ -22,7 +22,7 @@ processor_maps = []
 
 DEFAULT_TIMEOUT = 5
 DEFAULT_FREQUENCY = 1
-DEFAULT_BEACON_FREQUENCY = 2
+DEFAULT_BEACON_FREQUENCY = 0
 
 config = {
     'timeout': DEFAULT_TIMEOUT,
@@ -181,7 +181,7 @@ def main():
                  config.get('pull', []),
                  timeout=config['timeout'])
 
-        if a.loop and send_beacon:
+        if a.loop and send_beacon and config['beacon']:
             threading.Thread(target=_t_beacon,
                              name='beacon',
                              args=(send_beacon, config['beacon']),
