@@ -4,7 +4,7 @@ version: 1
 timeout: 2
 # print empty line every 2 seconds
 beacon: 2
-# pull data from source 2 times per second
+# pull data from source 10 times per second
 freq: 10
 output: ndjson
 # protocol
