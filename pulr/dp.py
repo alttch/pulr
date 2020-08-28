@@ -17,22 +17,26 @@ def parse_int(i):
 MAX_INT16 = 32767
 MAX_INT32 = 2147483647
 
+MAX_UINT8 = 255
 MAX_UINT16 = 65535
 MAX_UINT32 = 4294967295
 MAX_UINT64 = 18446744073709551615
 
 DATA_TYPE_BIT = 0
 
-DATA_TYPE_INT16 = 1
-DATA_TYPE_INT32 = 2
+DATA_TYPE_INT8 = 1
+DATA_TYPE_INT16 = 2
+DATA_TYPE_INT32 = 3
 
-DATA_TYPE_UINT16 = 10
-DATA_TYPE_UINT32 = 11
-DATA_TYPE_UINT64 = 12
+DATA_TYPE_UINT8 = 10
+DATA_TYPE_UINT16 = 11
+DATA_TYPE_UINT32 = 12
+DATA_TYPE_UINT64 = 13
 
 DATA_TYPE_REAL32 = 20
 
-MAX_VAL = {
+MAX_UVAL = {
+    DATA_TYPE_UINT8: MAX_UINT8,
     DATA_TYPE_UINT16: MAX_UINT16,
     DATA_TYPE_UINT32: MAX_UINT32,
     DATA_TYPE_UINT64: MAX_UINT64
@@ -48,7 +52,7 @@ def clear():
 
 
 def transform_speed(o, interval, tp, value):
-    maxval = MAX_VAL[tp]
+    maxval = MAX_UVAL[tp]
     if o in _speed_cache:
         v_prev, ptime = _speed_cache[o]
         t_delta = get_last_pull_time() - ptime
