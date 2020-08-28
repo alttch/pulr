@@ -50,7 +50,7 @@ Look in ./examples for the example configurations.
 ## How does it work
 
 One Pulr process pulls one piece of the hardware equipment. The goal is to pull
-and process the data as fast as possible but die as soon as any errors occur.
+and process the data as fast as possible, but die as soon as any errors occur.
 Pulr is built to be started by supervisor, which collects the data from it and
 restarts the process on crashes.
 
