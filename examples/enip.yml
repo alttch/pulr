@@ -63,11 +63,11 @@ pull:
       # to make offsets more useful, it's possible to write them as X+Y,
       # where X is the structure offset and Y is a tag offset
       - offset: 2000+0
-        set-id: MyStruct.ChildStructA.TagA
+        set-id: MyStruct.ChildStructB.TagA
         type: uint32
       - offset: 2000+4
-        set-id: MyStruct.ChildStructA.TagB
+        set-id: MyStruct.ChildStructB.TagB
         type: real
       - offset: 2000+8
-        set-id: MyStruct.ChildStructA.TagC
+        set-id: MyStruct.ChildStructB.TagC
         type: real
