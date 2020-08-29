@@ -8,7 +8,6 @@ set_style('id', color='blue', attrs='bold')
 set_style('val', color='yellow')
 
 from functools import partial
-from types import SimpleNamespace
 
 import pytz
 
