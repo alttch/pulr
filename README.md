@@ -21,11 +21,11 @@ pulr -F modbus.yml -L
 
 ```json
 {"id":"sensor:axon/din1.value","v":0}
-{"id":"sensor:axon/din2.value","v":0}
-{"id":"sensor:axon/din3.value","v":0}
+{"id":"sensor:axon/din2.value","v":1}
+{"id":"sensor:axon/din3.value","v":1}
 {"id":"sensor:axon/din4.value","v":0}
-{"id":"unit:axon/dout1.status","v":0}
-{"id":"unit:axon/dout2.status","v":0}
+{"id":"unit:axon/dout1.status","v":1}
+{"id":"unit:axon/dout2.status","v":1}
 {"id":"unit:axon/dout3.status","v":0}
 {"id":"unit:axon/dout4.status","v":0}
 {"id":"unit:axon/aout.value","v":0.00619}
