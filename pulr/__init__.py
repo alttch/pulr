@@ -187,7 +187,7 @@ def main():
     try:
         om = OUTPUT_METHODS[config['output']]
     except KeyError:
-        raise Exception('Unsupported output type or output type not specified')
+        raise Exception('Unsupported output type')
     output = om['output']
     send_beacon = om.get('beacon')
 
