@@ -21,18 +21,18 @@ pulr -F modbus.yml -L
 ```
 
 ```json
-{"id":"sensor:axon/din1.value","v":0}
-{"id":"sensor:axon/din2.value","v":1}
-{"id":"sensor:axon/din3.value","v":1}
-{"id":"sensor:axon/din4.value","v":0}
-{"id":"unit:axon/dout1.status","v":1}
-{"id":"unit:axon/dout2.status","v":1}
-{"id":"unit:axon/dout3.status","v":0}
-{"id":"unit:axon/dout4.status","v":0}
-{"id":"unit:axon/aout.value","v":0.00619}
-{"id":"sensor:axon/ain.value","v":5.2045}
-{"id":"unit:tests/u1.status","v":0}
-{"id":"unit:tests/u2.status","v":0}
+{"id":"sensor:axon/din1.value","value":0}
+{"id":"sensor:axon/din2.value","value":1}
+{"id":"sensor:axon/din3.value","value":1}
+{"id":"sensor:axon/din4.value","value":0}
+{"id":"unit:axon/dout1.status","value":1}
+{"id":"unit:axon/dout2.status","value":1}
+{"id":"unit:axon/dout3.status","value":0}
+{"id":"unit:axon/dout4.status","value":0}
+{"id":"unit:axon/aout.value","value":0.00619}
+{"id":"sensor:axon/ain.value","value":5.2045}
+{"id":"unit:tests/u1.status","value":0}
+{"id":"unit:tests/u2.status","value":0}
 ```
 
 ## Installing
