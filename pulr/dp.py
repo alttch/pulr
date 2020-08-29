@@ -6,10 +6,18 @@ from functools import partial
 def parse_int(i):
     if isinstance(i, int):
         return i
-    elif 'x' in i:
-        return int(i, 16)
-    else:
+    elif isinstance(i, float):
         return int(i)
+    else:
+        if '+' in i:
+            r = 0
+            for x in i.split('+'):
+                r += parse_int(x)
+            return r
+        elif 'x' in i:
+            return int(i, 16)
+        else:
+            return int(i)
 
 
 # common data types

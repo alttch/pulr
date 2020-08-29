@@ -160,17 +160,6 @@ SCHEMA_PULL = {
     }
 }
 
-
-def parse_offset(offset):
-    if isinstance(offset, int):
-        ofs = offset
-    else:
-        ofs = 0
-        for x in offset.split('+'):
-            ofs += int(x.strip())
-    return ofs
-
-
 TAG_STATUS_OK = 0
 TAG_STATUS_PENDING = 1
 
@@ -324,7 +313,8 @@ def init(cfg_proto, cfg_pull, timeout=5):
             o = m['set-id']
             tp = m.get('type')
             transform = m.get('transform')
-            offset = parse_offset(offset)
+            offset = parse_int(offset)
+            print(o, offset)
             if tp in ['real', 'real32']:
                 fn = partial(real32_to_data, o, offset,
                              prepare_transform(o, transform))
