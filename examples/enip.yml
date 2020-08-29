@@ -13,6 +13,8 @@ beacon: 2
 freq: 5
 # output as nd-json
 output: ndjson
+# output time, valid format values are: iso, timestamp
+#time-format: iso
 # protocol
 proto:
   # only ab_eip is supported at this moment

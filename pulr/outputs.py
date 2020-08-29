@@ -1,17 +1,50 @@
 import sys
+import time
+
 from functools import partial
 from types import SimpleNamespace
+
+import pytz
+
 from .beacons import beacon_empty_line
 
 oprint = partial(print, flush=True)
 eprint = partial(print, flush=True, file=sys.stderr)
 
-_d = SimpleNamespace()
+time_format = None
+
+try:
+    LOCAL_TZ = pytz.timezone(time.tzname[0])
+except:
+    eprint('unable to determine local time zone')
+    LOCAL_TZ = None
+
+TIME_FORMAT_ISO = 1
+TIME_FORMAT_TIMESTAMP = 2
+
+TIME_FORMATS = {'iso': TIME_FORMAT_ISO, 'timestamp': TIME_FORMAT_TIMESTAMP}
+
+
+def set_time_format(tf):
+    global time_format
+    if tf is not None:
+        time_format = TIME_FORMATS[tf]
+
 
 try:
     import rapidjson as json
 except:
     import json
+
+
+def get_time():
+    if time_format is None:
+        return None
+    elif time_format == TIME_FORMAT_ISO:
+        from datetime import datetime
+        return datetime.now().replace(tzinfo=LOCAL_TZ).isoformat()
+    elif time_format == TIME_FORMAT_TIMESTAMP:
+        return time.time()
 
 
 def print_trace():
@@ -24,11 +57,17 @@ def output_devnull(*args, **kwargs):
 
 
 def output_stdout(o, value):
-    oprint(f'{o} {value}')
+    oprint(f'{str(get_time()) + " " if time_format else ""}{o} {value}')
 
+
+def output_stdout_csv(o, value):
+    oprint(f'{str(get_time()) + ";" if time_format else ""}{o};{value}')
 
 def output_stdout_ndjson(o, value):
-    oprint(json.dumps({'id': o, 'v': value}))
+    d = {'id': o, 'value': value}
+    if time_format:
+        d['time'] = get_time()
+    oprint(json.dumps(d))
 
 
 def output_eva_datapuller(o, value):
@@ -51,6 +90,10 @@ OUTPUT_METHODS = {
     },
     'ndjson': {
         'output': output_stdout_ndjson,
+        'beacon': beacon_empty_line
+    },
+    'csv': {
+        'output': output_stdout_csv,
         'beacon': beacon_empty_line
     },
     'eva/datapuller': {

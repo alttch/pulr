@@ -100,7 +100,11 @@ Currently supported:
 
 * none or blank "output" field specified - output the data as plain text
 * ndjson - output the data as newline delimited JSON
+* csv - comma-separated values
 * eva/datapuller - specific type for [EVA ICS](https://www.eva-ics.com/)
+
+Optional field "time-format" adds time to data output. Valid values are: "iso",
+"timestamp".
 
 ## Bugs, feature requests, patches
 

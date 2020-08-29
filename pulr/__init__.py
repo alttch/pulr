@@ -15,7 +15,7 @@ import jsonschema
 import yaml
 
 from time import perf_counter, sleep
-from .outputs import OUTPUT_METHODS, eprint, print_trace
+from .outputs import OUTPUT_METHODS, eprint, print_trace, set_time_format
 from queue import Queue
 
 q = Queue()
@@ -64,6 +64,10 @@ CONFIG_SCHEMA = {
         },
         'output': {
             'type': ['string', 'null']
+        },
+        'time-format': {
+            'type': 'string',
+            'enum': ['iso', 'timestamp']
         },
         'pull': {
             'type': 'array'
@@ -183,6 +187,8 @@ def main():
     jsonschema.validate(config, CONFIG_SCHEMA)
 
     config['interval'] = 1 / config['freq']
+
+    set_time_format(config.get('time-format'))
 
     try:
         om = OUTPUT_METHODS[config['output']]

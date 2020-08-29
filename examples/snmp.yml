@@ -6,6 +6,8 @@ timeout: 2
 beacon: 2
 # pull data from source 2 times per second
 freq: 2
+# output time, valid format values are: iso, timestamp
+#time-format: iso
 # protocol
 proto:
   name: snmp
