@@ -24,7 +24,7 @@ if system == 'Windows':
 elif system == 'Darwin':
     libfile = 'libplctag.dylib'
 else:
-    libfile = '/usr/local/lib/libplctag.so'
+    libfile = 'libplctag.so'
 plc_lib = ctypes.cdll.LoadLibrary(libfile)
 
 plc_tag_create = plc_lib.plc_tag_create
