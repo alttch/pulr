@@ -5,8 +5,7 @@
 ## What is Pulr
 
 Pulr is a small command-line tool, which can pull data from the device and
-convert it into events. Meaning the data is being outputted ONLY when it's
-changed.
+convert it into events. Meaning the data is outputted ONLY when it's changed.
 
 The data is always being outputted to STDOUT, you can grep it or use any
 pipeline processor (I use [vector](https://vector.dev/)) to push it via HTTP,
