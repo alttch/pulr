@@ -206,28 +206,29 @@ def main():
 
     while True:
         clear()
-        if processor is None or not processor.is_alive():
-            processor = threading.Thread(target=_t_processor, name='processor')
         try:
+            lib.init(config['proto'],
+                     config.get('pull', []),
+                     timeout=config['timeout'])
+
+            processor = threading.Thread(target=_t_processor,
+                                         name='processor',
+                                         daemon=True)
             processor.start()
             try:
-                lib.init(config['proto'],
-                         config.get('pull', []),
-                         timeout=config['timeout'])
-
-                try:
-                    do(loop=a.loop)
-                finally:
-                    lib.shutdown()
-                if not a.loop:
-                    break
-            except KeyboardInterrupt:
+                do(loop=a.loop)
+            finally:
+                # finish data processing before shutting down proto lib
+                q.put(None)
+                processor.join()
+                lib.shutdown()
+            if not a.loop:
                 break
-            except:
-                if a.auto_restart and a.loop:
-                    print_trace()
-                    sleep(config['interval'])
-                else:
-                    raise
-        finally:
-            q.put(None)
+        except KeyboardInterrupt:
+            break
+        except:
+            if a.auto_restart and a.loop:
+                print_trace()
+                sleep(config['interval'])
+            else:
+                raise
