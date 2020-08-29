@@ -25,8 +25,11 @@ proto:
   cpu: LGX
 pull:
   # pull a single tag. As usually tag structures are pulled, set-id and offset
-  # are REQUIRED
+  # are REQUIRED. Fields size and count are optional (size is set to 1 by
+  # default)
   - tag: myTag1
+    #size: 4
+    #count: 1
     process:
       - offset: 0
         set-id: myTag1
