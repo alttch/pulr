@@ -201,7 +201,7 @@ def real64_to_data(o, offset, transform, tag_id):
     if value is None:
         raise ValueError
     if transform is not None:
-        value = run_transform(transform, DATA_TYPE_REAL32, value)
+        value = run_transform(transform, DATA_TYPE_REAL64, value)
     set_data(o, value)
 
 
