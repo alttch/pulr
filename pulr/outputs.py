@@ -92,7 +92,7 @@ def output_eva_datapuller(o, value):
 
 
 OUTPUT_METHODS = {
-    None: {
+    'text': {
         'output': output_stdout,
         'beacon': beacon_empty_line
     },
@@ -109,3 +109,5 @@ OUTPUT_METHODS = {
         'beacon': beacon_empty_line
     }
 }
+
+OUTPUT_METHODS[None] = OUTPUT_METHODS['text']

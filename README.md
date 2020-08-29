@@ -98,7 +98,7 @@ Currently supported:
 
 ## Output type
 
-* none or blank "output" field specified - output the data as plain text
+* text - output the data as plain text, default
 * ndjson - output the data as newline delimited JSON
 * csv - comma-separated values
 * eva/datapuller - specific type for [EVA ICS](https://www.eva-ics.com/)
