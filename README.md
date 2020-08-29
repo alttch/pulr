@@ -84,6 +84,7 @@ Planned very soon:
 * speed - calculate value growing speed, useful for SNMP interface counters
 * multiply, divide, round
 * bit2int - convert boolean bits into integers (1/0)
+* int2bit - convert integers (any value/0) into boolean bits (true/false)
 
 ## Output type
 
