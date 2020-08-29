@@ -46,6 +46,18 @@ pip3 install pymodbus
 pip3 install python-rapidjson
 ```
 
+Ethernet/IP support requires
+[libplctag](https://github.com/libplctag/libplctag), download and install it:
+
+```shell
+git clone https://github.com/libplctag/libplctag
+cd libplctag
+cmake CMakeLists.txt
+make
+sudo make install
+sudo ldconfig
+```
+
 ## Configuring
 
 Look in ./examples for the example configurations.
@@ -74,10 +86,7 @@ Currently supported:
 
 * Modbus (TCP/UDP)
 * SNMP (v1/v2)
-
-Planned very soon:
-
-* Ethernet/IP (Allen Bradley ControlLogix)
+* Ethernet/IP (Allen Bradley-compatible, experimental)
 
 ## Data transformers
 
