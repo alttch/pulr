@@ -1,6 +1,12 @@
 import sys
 import time
 
+from neotermcolor import colored, set_style
+
+set_style('time', color='white', attrs='dark')
+set_style('id', color='blue', attrs='bold')
+set_style('val', color='yellow')
+
 from functools import partial
 from types import SimpleNamespace
 
@@ -57,11 +63,13 @@ def output_devnull(*args, **kwargs):
 
 
 def output_stdout(o, value):
-    oprint(f'{str(get_time()) + " " if time_format else ""}{o} {value}')
+    oprint(f'{colored(str(get_time()), "@time") + " " if time_format else ""}'
+           f'{colored(o, "@id")} {colored(value,"@val")}')
 
 
 def output_stdout_csv(o, value):
     oprint(f'{str(get_time()) + ";" if time_format else ""}{o};{value}')
+
 
 def output_stdout_ndjson(o, value):
     d = {'id': o, 'value': value}

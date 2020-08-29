@@ -16,7 +16,7 @@ setuptools.setup(
     url='https://github.com/alttch/pulr',
     packages=setuptools.find_packages(),
     license='Apache License 2.0',
-    install_requires=['pyyaml', 'jsonschema', 'pytz'],
+    install_requires=['pyyaml', 'jsonschema', 'pytz', 'neotermcolor'],
     classifiers=(
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: Apache Software License',
