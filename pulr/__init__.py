@@ -1,5 +1,4 @@
 # TODO tests
-# TODO move beacon to process thread
 
 __author__ = 'Altertech, https://www.altertech.com/'
 __copyright__ = 'Copyright (C) 2020 Altertech'
@@ -22,6 +21,8 @@ from queue import Queue
 q = Queue()
 
 processor = None
+
+fn_beacon = None
 
 data = {}
 
@@ -106,19 +107,6 @@ def set_data(o, value):
         output(o, value)
 
 
-def _t_beacon(fn, interval):
-    try:
-        next_beacon = perf_counter() + interval
-        while True:
-            ts = next_beacon - perf_counter()
-            if ts > 0:
-                sleep(ts)
-            fn()
-            next_beacon += interval
-    except:
-        print_trace()
-
-
 def _t_processor():
     try:
         while True:
@@ -136,10 +124,15 @@ def do(loop=False):
 
     interval = config['interval']
 
-    next_iter = perf_counter() + interval
+    beacon_interval = config['beacon']
+
+    t = perf_counter()
+
+    next_iter = t + interval
+    next_beacon = t + +beacon_interval
 
     def pull_and_process():
-        nonlocal next_iter
+        nonlocal next_iter, next_beacon
         global last_pull_time
 
         last_pull_time = perf_counter()
@@ -148,7 +141,13 @@ def do(loop=False):
             q.put((plr(), prc_map))
         if not processor.is_alive():
             raise RuntimeError('processor thread is gone')
-        ts = next_iter - perf_counter()
+        t = perf_counter()
+        if fn_beacon is not None and loop and next_beacon < t:
+            fn_beacon()
+            while next_beacon < t:
+                next_beacon += beacon_interval
+            t = perf_counter()
+        ts = next_iter - t
         if loop:
             if ts > 0:
                 sleep(ts)
@@ -166,6 +165,7 @@ def do(loop=False):
 def main():
     global output
     global processor
+    global fn_beacon
     ap = argparse.ArgumentParser()
     ap.add_argument('-F',
                     '--config',
@@ -196,7 +196,9 @@ def main():
     except KeyError:
         raise Exception('Unsupported output type')
     output = om['output']
-    send_beacon = om.get('beacon')
+
+    if config.get('beacon'):
+        fn_beacon = om.get('beacon')
 
     proto = config['proto']['name']
 
@@ -204,12 +206,6 @@ def main():
         proto = proto.split('/', 1)[0]
 
     lib = importlib.import_module(f'pulr.proto.{proto}')
-
-    if a.loop and send_beacon and config['beacon']:
-        threading.Thread(target=_t_beacon,
-                         name='beacon',
-                         args=(send_beacon, config['beacon']),
-                         daemon=True).start()
 
     while True:
         clear()
