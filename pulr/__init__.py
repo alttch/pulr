@@ -4,7 +4,7 @@ __author__ = 'Altertech, https://www.altertech.com/'
 __copyright__ = 'Copyright (C) 2020 Altertech'
 __license__ = 'Apache License 2.0'
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 import sys
 import argparse
