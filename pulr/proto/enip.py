@@ -314,7 +314,6 @@ def init(cfg_proto, cfg_pull, timeout=5):
             tp = m.get('type')
             transform = m.get('transform')
             offset = parse_int(offset)
-            print(o, offset)
             if tp in ['real', 'real32']:
                 fn = partial(real32_to_data, o, offset,
                              prepare_transform(o, transform))
