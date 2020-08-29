@@ -289,7 +289,7 @@ def int64_to_data(o, offset, transform, tag_id):
 
 
 def init(cfg_proto, cfg_pull, timeout=5):
-    global plc_timeout, plc_path, plc_lib
+    global plc_timeout, plc_path
 
     jsonschema.validate(cfg_proto, SCHEMA_PROTO)
     jsonschema.validate(cfg_pull, SCHEMA_PULL)
