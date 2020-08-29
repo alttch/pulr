@@ -34,6 +34,7 @@ DATA_TYPE_UINT32 = 12
 DATA_TYPE_UINT64 = 13
 
 DATA_TYPE_REAL32 = 20
+DATA_TYPE_REAL64 = 21
 
 MAX_UVAL = {
     DATA_TYPE_UINT8: MAX_UINT8,
@@ -85,6 +86,10 @@ def transform_bit_to_int(tp, value):
     return 1 if value else 0
 
 
+def transform_int_to_bit(tp, value):
+    return value != 0
+
+
 def prepare_transform(o, transform):
     if transform is not None:
         transforms = []
@@ -99,7 +104,9 @@ def prepare_transform(o, transform):
             elif c['type'] == 'round':
                 transforms.append(partial(transform_round, c['digits']))
             elif c['type'] == 'bit2int':
-                transforms.append(partial(transform_bit_to_int))
+                transforms.append(transform_bit_to_int)
+            elif c['type'] == 'int2bit':
+                transforms.append(transform_int_to_bit)
             else:
                 raise ValueError(f'Unsupported transform {c["type"]}')
         return transforms
@@ -113,4 +120,3 @@ def run_transform(transform, tp, value):
         if value is None:
             return None
     return value
-
