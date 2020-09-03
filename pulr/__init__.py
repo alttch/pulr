@@ -129,7 +129,7 @@ def do(loop=False):
     t = perf_counter()
 
     next_iter = t + interval
-    next_beacon = t + +beacon_interval
+    next_beacon = t + beacon_interval
 
     def pull_and_process():
         nonlocal next_iter, next_beacon
