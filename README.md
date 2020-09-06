@@ -88,7 +88,7 @@ Currently supported:
 
 ## Data transformers
 
-* **calc_speed** - calculate value growing speed, useful for SNMP interface
+* **calc\_speed** - calculate value growing speed, useful for SNMP interface
   counters
 
 * **multiply**, **divide**, **round**
