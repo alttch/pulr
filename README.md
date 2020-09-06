@@ -110,6 +110,8 @@ However it differs from the draft Python version:
 
 * "transform" syntax was changed a little bit, see config examples.
 
+* more command line args.
+
 * No more "bit2int" and "int2bit" transformers, it's hardly to imagine where
   they could be useful.
 
