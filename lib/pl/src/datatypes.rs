@@ -74,7 +74,7 @@ impl fmt::Display for OutputTypeError {
 
 pub fn get_output_type(output_type: &String) -> Result<OutputType, OutputTypeError> {
     return match output_type.to_lowercase().as_str() {
-        "stdout" | "-" => Ok(OutputType::Stdout),
+        "stdout" | "text" | "plain" | "-" => Ok(OutputType::Stdout),
         "csv" => Ok(OutputType::StdoutCsv),
         "ndjson" | "json" => Ok(OutputType::StdoutNdJson),
         "eva/datapuller" | "eva" => Ok(OutputType::StdoutEvaDatapuller),
