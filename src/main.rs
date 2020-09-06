@@ -17,7 +17,7 @@ mod ppmodbus;
 mod ppenip;
 
 const HOMEPAGE: &str = "https://github.com/alttch/pulr";
-const VERSION: &str = "0.0.1";
+const VERSION: &str = "1.0.0";
 
 fn get_default_timeout() -> f32 {
     return 5.0;

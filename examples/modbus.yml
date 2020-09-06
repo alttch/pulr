@@ -18,7 +18,7 @@ proto:
   # Modbus host/port
   source: 10.90.1.138:502
   # default unit, if not specified in pull configs
-  default-unit: 0x01
+  unit: 0x01
 pull:
   # get 2 holding registers (h = holding, i = input, d = discrete, c = coils)
   - reg: h0
@@ -48,7 +48,6 @@ pull:
 
   # get another 4 registers, starting from h3000
   - reg: h3000
-    unit: 0x01
     count: 4
     process:
       # it's possible to use =X to specify absolute offset, meaning =3000 will
@@ -69,7 +68,7 @@ pull:
           - func: divide
             args: [ 1000 ]
           # and round it to 9 digits after comma
-          - func: [ round ]
+          - func: round
             args: [ 9 ]
       - offset: =3002
         type: real
