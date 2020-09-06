@@ -103,7 +103,7 @@ Currently supported:
 Optional field "time-format" adds time to data output. Valid values are:
 "rfc3339", "timestamp" (alias: raw).
 
-# Rust version difference
+## Rust version difference
 
 As it was mentioned above, Rust version is fast. It's very fast and efficient.
 However it differs from the draft Python version:
@@ -120,6 +120,11 @@ However it differs from the draft Python version:
 
 * Modbus via UDP is no longer supported, use TCP instead. Only single Modbus
   unit can be pulled per process (look *examples/modbus.yml*).
+
+## Troubleshooting
+
+Before reporting a problem, try running Pulr with verbose output ("-v" command
+line flag).
 
 ## Bugs, feature requests, patches
 

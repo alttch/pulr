@@ -7,27 +7,25 @@ beacon: 2
 # pull data from source 2 times per second
 freq: 2
 # output time, valid format values are: rfc3339, raw / timestamp
-#time-format: rfc3339
+time-format: rfc3339
 # protocol
 proto:
   name: snmp
   # snmp host/port
-  source: 10.90.1.1:161
+  source: 10.90.34.1:161
   community: public
-  # retry attempts
-  retries: 2
-  # snmp version
+  # snmp version, only v2 is supported at this moment
   version: 2
 # output as nd-json
 output: ndjson
 pull:
   - oids:
-    # .* means walk oid
-    - system.*
-    # process the data
+    - 1.3.6.1.2.1.1.1
+    - 1.3.6.1.2.1.1.3
     process:
-      # for oid = sysUpTimeInstance
-      - oid: sysUpTimeInstance
+      - oid: 1.3.6.1.2.1.1.1.0
+        set-id: systemname
+      - oid: 1.3.6.1.2.1.1.3.0
         # rename to uptime, optional
         set-id: uptime
         transform:
@@ -40,16 +38,15 @@ pull:
           # round value to zero digits after comma
           - func: round
             args: [ 0 ]
-    ignore:
-      # ignore this oid
-      - sysContact.0
-  - oids:
-    # get 2 oids at once. will do GET requests for SNMPv1
-    # one GETBULK for SNMPv2
-    - .1.3.6.1.2.1.2.2.1.10.15
-    - .1.3.6.1.2.1.2.2.1.16.15
+  - oids: 
+    # will do a single SNMPGET request if single SNMP oid specified
+    # will do GETBULK request if more than one oid specified or max-repeat is set and it's > 1
+    - 1.3.6.1.2.1.2.2.1.10.1
+    - 1.3.6.1.2.1.2.2.1.16.1
+    max-repeat: 20
+    non-repeat: 0
     process:
-      - oid: ifOutOctets.16
+      - oid: 1.3.6.1.2.1.2.2.1.16.13
         # rename to Pub-out
         set-id: Pub-out
         transform: &if
@@ -62,12 +59,12 @@ pull:
           - func: multiply
             args: [ 8 ]
           # divide by 1000 to get kbits
-          - func: divide
-            args: [ 1000 ]
+          #- func: divide
+            #args: [ 1000 ]
           # round the result to 1 digit after comma
           - func: round
             args: [ 1 ]
-      - oid: ifInOctets.16
+      - oid: 1.3.6.1.2.1.2.2.1.10.13
         set-id: Pub-in
         # use the same YAML anchor to transform the interface data
         transform: *if
