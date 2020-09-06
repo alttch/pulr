@@ -16,6 +16,9 @@ mod ppmodbus;
 #[path = "proto/ppenip.rs"]
 mod ppenip;
 
+#[path = "proto/ppsnmp.rs"]
+mod ppsnmp;
+
 const HOMEPAGE: &str = "https://github.com/alttch/pulr";
 const VERSION: &str = "1.0.0";
 
