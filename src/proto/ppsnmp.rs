@@ -77,11 +77,37 @@ struct SNMPDataProcessInfo {
     transform: datatypes::EventTransformList,
 }
 
-struct TaskResult<'a> {
-    data: Option<snmp::SnmpPdu<'a>>,
-    work_id: Option<usize>,
-    t: datatypes::EventTime,
+enum SNMPValue {
+    SBoolean(u8),
+    SUint32(u32),
+    SInt64(i64),
+    SUint64(u64),
+    SStr(String),
+    Null,
 }
+
+fn parse_snmp_val(value: snmp::Value) -> SNMPValue {
+    use snmp::Value::*;
+    use SNMPValue::*;
+    return match value {
+        Boolean(v) => {
+            if v {
+                SBoolean(1)
+            } else {
+                SBoolean(0)
+            }
+        }
+        Integer(v) => SInt64(v),
+        _ => SNMPValue::Null,
+    };
+}
+
+struct SNMPResult {
+    name: String,
+    value: SNMPValue,
+}
+
+define_task_result!(Vec<SNMPResult>);
 
 pub fn run(
     inloop: bool,
@@ -124,13 +150,6 @@ pub fn run(
     // move iter to lib
     let mut pull_loop = IntervalLoop::new(interval);
     let (tx, rx) = mpsc::channel();
-    let mut sess = snmp::SyncSession::new(
-        format!("{}:{}", config.proto.source.host, config.proto.source.port),
-        "public".as_bytes(),
-        Some(timeout),
-        0,
-    )
-    .unwrap();
     // data processor
     let processor = thread::spawn(move || loop {
         let w: TaskResult = rx.recv().unwrap();
@@ -145,35 +164,52 @@ pub fn run(
     // pulling loop
     loop {
         for work_id in 0..pulls.len() {
+            let mut sess = snmp::SyncSession::new(
+                format!("{}:{}", config.proto.source.host, config.proto.source.port),
+                "public".as_bytes(),
+                Some(timeout),
+                0,
+            )
+            .unwrap();
             let call_time = EventTime::new(time_format);
             let p = pulls.get(work_id).unwrap();
-            let response: snmp::SnmpPdu;
+            let mut response: snmp::SnmpPdu;
+            let mut result: Vec<SNMPResult> = Vec::new();
             //let mut response;
             if p.oids.len() > 1 {
                 let mut z = vec![];
                 for o in &p.oids {
                     z.push(o.as_slice());
                 }
-                let response = sess
+                let mut response = sess
                     .getbulk(z.as_slice(), p.non_repeat, p.max_repeat)
-                    .expect("SNMP GET error");
-            tx.send(TaskResult {
-                data: Some(response),
-                work_id: Some(work_id),
-                t: call_time,
-            })
-            .unwrap();
-            } else {
-                let response = sess
-                    .getnext(p.oids.get(0).unwrap().as_slice())
                     .expect("SNMP GETBULK error");
+                for (name, val) in response.varbinds {
+                    result.push(SNMPResult {
+                        name: name.to_string(),
+                        value: parse_snmp_val(val),
+                    });
+                }
+            } else {
+                let o = p.oids.get(0).unwrap();
+                let mut response = sess
+                    .getnext(o.as_slice())
+                    .expect(&format!("SNMP GET error {:?}", o));
+                let (name, val) = response
+                    .varbinds
+                    .next()
+                    .expect(&format!("SNMP GET parse error {:?}", o));
+                result.push(SNMPResult {
+                    name: name.to_string(),
+                    value: parse_snmp_val(val),
+                });
+            }
             tx.send(TaskResult {
-                data: Some(response),
+                data: Some(result),
                 work_id: Some(work_id),
                 t: call_time,
             })
             .unwrap();
-            }
         }
         if !inloop {
             break;
