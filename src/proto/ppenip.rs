@@ -79,6 +79,8 @@ define_task_result!(i32);
 
 pub fn run(
     inloop: bool,
+    // TODO output some debug info
+    _verbose: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,

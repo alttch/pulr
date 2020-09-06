@@ -82,6 +82,7 @@ struct Config {
 
 fn main() {
     let mut in_loop = false;
+    let mut verbose = false;
     let mut cfgfile = String::new();
     let mut output_type = String::new();
     let greeting = format!("Pulr v{} ({})", VERSION, HOMEPAGE);
@@ -90,6 +91,8 @@ fn main() {
         ap.set_description(greeting.as_str());
         ap.refer(&mut in_loop)
             .add_option(&["-L", "--loop"], StoreTrue, "Loop (production)");
+        ap.refer(&mut verbose)
+            .add_option(&["-v", "--verbose"], StoreTrue, "Verbose output (debug)");
         ap.refer(&mut cfgfile)
             .add_option(&["-F", "--config"], Store, "Configuration file")
             .metavar("CONFIG")
@@ -121,6 +124,7 @@ fn main() {
             "modbus" => {
                 ppmodbus::run(
                     in_loop,
+                    verbose,
                     cfg,
                     timeout,
                     interval,
@@ -133,6 +137,20 @@ fn main() {
             "enip" => {
                 ppenip::run(
                     in_loop,
+                    verbose,
+                    cfg,
+                    timeout,
+                    interval,
+                    config.time_format,
+                    out,
+                    &mut beacon,
+                );
+                ()
+            }
+            "snmp" => {
+                ppsnmp::run(
+                    in_loop,
+                    verbose,
                     cfg,
                     timeout,
                     interval,
