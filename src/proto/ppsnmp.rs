@@ -175,7 +175,7 @@ pub fn run(
             let p = pulls.get(work_id).unwrap();
             let mut response: snmp::SnmpPdu;
             let mut result: Vec<SNMPResult> = Vec::new();
-            //let mut response;
+            // TODO: move slices to prepare stage
             if p.oids.len() > 1 {
                 let mut z = vec![];
                 for o in &p.oids {
