@@ -41,7 +41,7 @@ pulr -F modbus.yml -L
 [Download a static binary from releases
 page](https://github.com/alttch/pulr/releases) and enjoy.
 
-# Building from source
+## Building from source
 
 Ethernet/IP support requires
 [libplctag](https://github.com/libplctag/libplctag), download and install it:
