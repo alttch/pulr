@@ -113,7 +113,8 @@ However it differs from the draft Python version:
 * No more "bit2int" and "int2bit" transformers, it's hardly to imagine where
   they could be useful.
 
-* Modbus via UDP is no longer supported, use TCP instead.
+* Modbus via UDP is no longer supported, use TCP instead. Only single Modbus
+  unit can be pulled per process (look *examples/modbus.yml*).
 
 ## Bugs, feature requests, patches
 
