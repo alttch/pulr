@@ -55,7 +55,7 @@ pull:
         transform: &if
           # instead of value itself, measure its growing speed (here - calc
           # bandwidth)
-          - func: speed
+          - func: calc_speed
           # calculate 1-second speed to avoid zero values
             args: [ 1 ]
           # multiply by 8 to get bits

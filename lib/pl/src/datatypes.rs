@@ -95,7 +95,7 @@ where
         "multiply" => transform::TransformFunction::Multiply,
         "divide" => transform::TransformFunction::Divide,
         "round" => transform::TransformFunction::Round,
-        "speed" => transform::TransformFunction::CalcSpeed,
+        "calc_speed" => transform::TransformFunction::CalcSpeed,
         _ => unimplemented!("function {}", func),
     });
 }

@@ -83,13 +83,15 @@ longer, but kept in "legacy0" branch.
 Currently supported:
 
 * Modbus (TCP only)
-* SNMP (v1/v2) [v1 WIP]
+* SNMP (v2)
 * Ethernet/IP (Allen Bradley-compatible)
 
 ## Data transformers
 
-* speed - calculate value growing speed, useful for SNMP interface counters [v1 WIP]
-* multiply, divide, round
+* **calc_speed** - calculate value growing speed, useful for SNMP interface
+  counters
+
+* **multiply**, **divide**, **round**
 
 ## Output type
 
@@ -108,7 +110,8 @@ However it differs from the draft Python version:
 
 * "version" field in configuration file should be set to "2"
 
-* "transform" syntax was changed a little bit, see config examples.
+* "transform" syntax was changed a little bit, see config examples. "speed"
+  function renamed to "calc_speed".
 
 * more command line args.
 
