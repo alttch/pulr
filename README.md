@@ -83,12 +83,12 @@ longer, but kept in "legacy0" branch.
 Currently supported:
 
 * Modbus (TCP only)
-* SNMP (v1/v2)
+* SNMP (v1/v2) [v1 WIP]
 * Ethernet/IP (Allen Bradley-compatible)
 
 ## Data transformers
 
-* speed - calculate value growing speed, useful for SNMP interface counters
+* speed - calculate value growing speed, useful for SNMP interface counters [v1 WIP]
 * multiply, divide, round
 
 ## Output type
