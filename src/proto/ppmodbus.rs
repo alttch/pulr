@@ -6,18 +6,19 @@ use std::sync::mpsc;
 use ieee754::Ieee754;
 
 use std::thread;
-use std::time::{Duration};
+use std::time::Duration;
 
-use pl::IntervalLoop;
 use pl::tools::GetBit;
+use pl::IntervalLoop;
 
-use pl::datatypes;
 use datatypes::{Event, EventTime, GenDataType, GenDataTypeParse, ParseData};
+use pl::datatypes;
 
 const DEFAULT_MODBUS_PORT: u16 = 502;
 
 const ERROR_OOB: &str = "data out of bounds";
 
+#[derive(Debug)]
 enum ModbusRegisterType {
     Holding,
     Input,
@@ -129,6 +130,7 @@ struct ModbusDataProcessInfo {
 }
 
 // TODO: move some fields to de_
+#[derive(Debug)]
 struct ModbusPullData {
     tp: ModbusRegisterType,
     addr: u16,
@@ -139,8 +141,7 @@ define_task_result!(Vec<u16>);
 
 pub fn run(
     inloop: bool,
-    // TODO output some debug info
-    _verbose: bool,
+    verbose: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,
@@ -290,6 +291,9 @@ pub fn run(
         for i in 0..pulls.len() {
             let call_time = EventTime::new(time_format);
             let p = pulls.get(i).unwrap();
+            if verbose {
+                pl::print_debug(&format!("reading registers {:?}", p));
+            }
             let data = match p.tp {
                 ModbusRegisterType::Holding => client.read_holding_registers(p.addr, p.count),
                 ModbusRegisterType::Input => client.read_input_registers(p.addr, p.count),
@@ -297,11 +301,16 @@ pub fn run(
                 ModbusRegisterType::Discrete => client.read_discrete_inputs_as_u16(p.addr, p.count),
             };
             tx.send(match data {
-                Ok(v) => TaskResult {
-                    data: Some(v),
-                    work_id: Some(i),
-                    t: call_time,
-                },
+                Ok(v) => {
+                    if verbose {
+                        pl::print_debug(&format!("{:?}", v));
+                    }
+                    TaskResult {
+                        data: Some(v),
+                        work_id: Some(i),
+                        t: call_time,
+                    }
+                }
                 Err(err) => panic!("{}", err),
             })
             .unwrap();

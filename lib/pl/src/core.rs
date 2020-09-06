@@ -15,7 +15,7 @@ use tools::oprint;
 use transform;
 
 pub fn print_debug(s: &String) {
-    println!("{}", s.cyan().dimmed());
+    oprint(s.cyan().dimmed().to_string());
 }
 
 pub struct Beacon {

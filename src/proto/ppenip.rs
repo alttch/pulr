@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::ffi;
 use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration};
+use std::time::Duration;
 
 use pl::datatypes;
 use pl::datatypes::{Event, EventTime, GenDataType, GenDataTypeParse, ParseData};
@@ -13,7 +13,6 @@ use plctag;
 
 const DEFAULT_ENIP_PORT: u16 = 44818;
 const PLC_SLEEP_STEP: u32 = 10_000_000;
-
 
 #[derive(Deserialize)]
 struct EnIpConfig {
@@ -79,8 +78,7 @@ define_task_result!(i32);
 
 pub fn run(
     inloop: bool,
-    // TODO output some debug info
-    _verbose: bool,
+    verbose: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,
@@ -203,6 +201,9 @@ pub fn run(
             let tag_id = match active_tags.get(&p.path_hash) {
                 Some(v) => *v,
                 None => unsafe {
+                    if verbose {
+                        pl::print_debug(&format!("creating new tag {}", p.path));
+                    }
                     let path = ffi::CString::new(p.path.to_owned()).unwrap();
                     let tag_id = plctag::plc_tag_create(path.as_ptr(), plc_timeout);
                     if tag_id < 0 {
@@ -223,6 +224,9 @@ pub fn run(
                 },
             };
             unsafe {
+                if verbose {
+                    pl::print_debug(&format!("reading tag {}", p.path));
+                }
                 let rc = plctag::plc_tag_read(tag_id, plc_timeout);
                 if rc != plctag::PLCTAG_STATUS_OK {
                     panic!("{} read error {}", p.path, rc);

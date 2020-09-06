@@ -188,6 +188,17 @@ pub fn run(
     .unwrap();
     let (tx, rx) = mpsc::channel();
     // data processor
+    macro_rules! debug_snmp_result {
+        ($v:path) => {
+            if verbose {
+                pl::print_debug(&"SNMP result\n--------------".to_string());
+                for (k, v) in $v.iter() {
+                    pl::print_debug(&format!("{} = '{:?}'", k, v))
+                }
+                pl::print_debug(&"--------------".to_string());
+            }
+        };
+    }
     let processor = thread::spawn(move || loop {
         let w: TaskResult = rx.recv().unwrap();
         let t = w.t;
@@ -195,13 +206,6 @@ pub fn run(
             Some(v) => v,
             None => break,
         };
-        if verbose {
-            pl::print_debug(&"SNMP result\n--------------".to_string());
-            for (k, v) in snmp_result.iter() {
-                pl::print_debug(&format!("{} = '{:?}'", k, v))
-            }
-            pl::print_debug(&"--------------".to_string());
-        }
         let i = w.work_id.unwrap();
         for d in dp_list.get(i).unwrap() {
             macro_rules! process_snmp_result {
@@ -268,6 +272,7 @@ pub fn run(
                 for (name, val) in response.varbinds {
                     result.insert(name.to_string(), parse_snmp_val(val));
                 }
+                debug_snmp_result!(result);
                 tx.send(TaskResult {
                     data: Some(result),
                     work_id: Some(work_id),
@@ -288,6 +293,7 @@ pub fn run(
                     .expect(&format!("SNMP GET parse error {:?}", o));
                 let mut result: HashMap<String, SNMPValue> = HashMap::new();
                 result.insert(name.to_string(), parse_snmp_val(val));
+                debug_snmp_result!(result);
                 tx.send(TaskResult {
                     data: Some(result),
                     work_id: Some(work_id),
