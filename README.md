@@ -38,7 +38,8 @@ pulr -F modbus.yml -L
 
 ## Installing
 
-Download a static binary from releases page and enjoy.
+[Download a static binary from releases
+page](https://github.com/alttch/pulr/releases) and enjoy.
 
 # Building from source
 
