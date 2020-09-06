@@ -1,0 +1,15 @@
+[package]
+include = ["src/**/*", "Cargo.toml"]
+name = "pulr"
+version = "1.0.0"
+edition = "2018"
+
+[dependencies]
+pl = { path = "lib/pl" }
+plctag = { path = "lib/plctag" }
+
+serde = { version =  "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+modbus = "1.0.3"
+ieee754 = "0.2.6"
+argparse = "0.2.2"

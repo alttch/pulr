@@ -1,14 +1,14 @@
 # Modbus example, pulling data from Axon S115 PLC
 #
-version: 1
+version: 2
 timeout: 2
 # print empty line every 2 seconds
 beacon: 2
 # pull data from source 10 times per second
 freq: 10
 output: ndjson
-# output time, valid format values are: iso, timestamp
-#time-format: iso
+# output time, valid format values are: rfc3339, raw / timestamp
+#time-format: rfc3339
 # protocol
 proto:
   # Modbus TCP and UDP are supported
@@ -29,33 +29,22 @@ pull:
       - offset: 0/0
         # set id of bit 0/0. For Modbus data, set-id is REQUIRED
         set-id: sensor:axon/din1.value
-        # by default, bits are booleans (True/False), transform to 1 / 0
-        transform: &b2i
-          - type: bit2int
-        # do the same for the rest of the bits
       - offset: 0/1
         set-id: sensor:axon/din2.value
-        transform: *b2i
       - offset: 0/2
         set-id: sensor:axon/din3.value
-        transform: *b2i
       - offset: 0/3
         set-id: sensor:axon/din4.value
-        transform: *b2i
 
         # parse the second byte too
       - offset: 1/0
         set-id: unit:axon/dout1.status
-        transform: *b2i
       - offset: 1/1
         set-id: unit:axon/dout2.status
-        transform: *b2i
       - offset: 1/2
         set-id: unit:axon/dout3.status
-        transform: *b2i
       - offset: 1/3
         set-id: unit:axon/dout4.status
-        transform: *b2i
 
   # get another 4 registers, starting from h3000
   - reg: h3000
@@ -77,11 +66,11 @@ pull:
         set-id:  unit:axon/aout.value
         transform:
           # divide the value by 1000
-          - type: divide
-            divisor: 1000
+          - func: divide
+            args: [ 1000 ]
           # and round it to 9 digits after comma
-          - type: round
-            digits: 9
+          - func: [ round ]
+            args: [ 9 ]
       - offset: =3002
         type: real
         set-id:  sensor:axon/ain.value
@@ -95,7 +84,5 @@ pull:
         set-id: unit:tests/u1.status
         # coils always return boolean bits, transform them to integers if
         # necesseary
-        transform: *b2i
       - offset: 1
         set-id: unit:tests/u2.status
-        transform: *b2i

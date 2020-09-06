@@ -1,10 +1,6 @@
-# UNTESTED, WIP
-#
 # Ethernet/IP example for Allen Bradley PLCs
 #
-# requires https://github.com/libplctag/libplctag library
-#
-version: 1
+version: 2
 # PLC timeout
 timeout: 2
 # print empty line every 2 seconds
@@ -13,8 +9,8 @@ beacon: 2
 freq: 5
 # output as nd-json
 output: ndjson
-# output time, valid format values are: iso, timestamp
-#time-format: iso
+# output time, valid format values are: rfc3339, raw / timestamp
+#time-format: rfc3339
 # protocol
 proto:
   # only ab_eip is supported at this moment
@@ -39,12 +35,14 @@ pull:
         #
         # real, real32, real64 uint8, int8, sint8, byte, uint16, word, uint32,
         # dword, sint16, int16, sint32, int32, int64, sint64, uint64, qword
-        # 
-        # for booleans use byte or uint8, transform with int2bit later if
-        # boolean is required
-        type: byte
+        type: int32
         transform:
-          - type: int2bit
+          # divide result value by 1000
+          - func: divide
+            args: [ 1000 ]
+          # and round to 2 digits after comma
+          - func: round
+            args: [ 2 ]
   # Let's pull a complicated 3-level structure MyStruct, which contains child
   # structures ChildStructA (offset=0) and ChildStructB(offset=2000)
   - tag: MyStruct

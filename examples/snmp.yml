@@ -1,13 +1,13 @@
 # SNMP example
 #
-version: 1
+version: 2
 timeout: 2
 # print empty line every 2 seconds
 beacon: 2
 # pull data from source 2 times per second
 freq: 2
-# output time, valid format values are: iso, timestamp
-#time-format: iso
+# output time, valid format values are: rfc3339, raw / timestamp
+#time-format: rfc3339
 # protocol
 proto:
   name: snmp
@@ -32,14 +32,14 @@ pull:
         set-id: uptime
         transform:
           # divide it by 100 (get seconds)
-          - type: divide
-            divisor: 100
+          - func: divide
+            args: [ 100 ]
           # divide again, by 86400 (get days)
-          - type: divide
-            divisor: 86400
+          - func: divide
+            args: [ 86400 ]
           # round value to zero digits after comma
-          - type: round
-            digits: 0
+          - func: round
+            args: [ 0 ]
     ignore:
       # ignore this oid
       - sysContact.0
@@ -55,18 +55,18 @@ pull:
         transform: &if
           # instead of value itself, measure its growing speed (here - calc
           # bandwidth)
-          - type: speed
+          - func: speed
           # calculate 1-second speed to avoid zero values
-            interval: 1
+            args: [ 1 ]
           # multiply by 8 to get bits
-          - type: multiply
-            multiplier: 8
+          - func: multiply
+            args: [ 8 ]
           # divide by 1000 to get kbits
-          - type: divide
-            divisor: 1000
+          - func: divide
+            args: [ 1000 ]
           # round the result to 1 digit after comma
-          - type: round
-            digits: 1
+          - func: round
+            args: [ 1 ]
       - oid: ifInOctets.16
         set-id: Pub-in
         # use the same YAML anchor to transform the interface data
