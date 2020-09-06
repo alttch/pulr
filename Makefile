@@ -20,4 +20,4 @@ release-upload:
 	curl -H "Authorization: token ${GITHUB_TOKEN}" \
 		-H "Content-Type: application/x-executable" \
 		--data-binary @/tmp/pulr.x86_64.gz \
-		"https://uploads.github.com/repos/hubot/singularity/releases/v${VERSION}/assets?name=pulr.x86_64.gz"
+		"https://uploads.github.com/repos/alttch/pulr/releases/v${VERSION}/assets?name=pulr.x86_64.gz"
