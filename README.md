@@ -75,41 +75,51 @@ the main loop in case of failures.
 
 ## Is it fast enough?
 
-Pulr is written in Python, but it's written to be fast enough (e.g. Modbus
-devices can be pulled up to 50 times per second without any problem).
+Pulr is written in Rust. So it's rocket-fast and super memory efficient.
 
-Pulr code is written to be easily transformed to Rust or Golang, I plan to do
-this very soon.
+The first (draft) Pulr version was written in Python, it isn't supported any
+longer, but kept in "legacy0" branch for a history.
 
 ## Protocols
 
 Currently supported:
 
-* Modbus (TCP/UDP)
+* Modbus (TCP only)
 * SNMP (v1/v2)
-* Ethernet/IP (Allen Bradley-compatible, experimental)
+* Ethernet/IP (Allen Bradley-compatible)
 
 ## Data transformers
 
 * speed - calculate value growing speed, useful for SNMP interface counters
 * multiply, divide, round
-* bit2int - convert boolean bits into integers (1/0)
-* int2bit - convert integers (any value/0) into boolean bits (true/false)
 
 ## Output type
 
-* text - output the data as plain text, default
-* ndjson - output the data as newline delimited JSON
+* text (aliases: stdout, plain, "-") - output the data as plain text, default
+* ndjson (alias: json) - output the data as newline delimited JSON
 * csv - comma-separated values
 * eva/datapuller - specific type for [EVA ICS](https://www.eva-ics.com/)
 
-Optional field "time-format" adds time to data output. Valid values are: "iso",
-"timestamp".
+Optional field "time-format" adds time to data output. Valid values are:
+"rfc3339", "timestamp" (alias: raw).
+
+# Rust version difference
+
+As it was mentioned above, Rust version is fast. It's very fast and efficient.
+However it differs from the draft Python version:
+
+* "version" field in configuration file should be set to "2"
+
+* "transform" syntax was changed a little bit, see config examples.
+
+* No more "bit2int" and "int2bit" transformers, it's hardly to imagine where
+  they could be useful.
+
+* Modbus via UDP is no longer supported, use TCP instead.
 
 ## Bugs, feature requests, patches
 
-You are welcome. For the patches, please avoid Python-specific coding style
-(e.g. function kwargs), as Python version will be rewritten very soon.
+You welcome.
 
 Just:
 
