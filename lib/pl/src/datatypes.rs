@@ -199,21 +199,21 @@ impl<'a, T: ToString + transform::Transform> Event<'a, T> {
         &self,
         transform_function: transform::TransformFunction,
         args: &Vec<f64>,
-    ) -> Event<f64> {
+    ) -> Option<Event<f64>> {
         let value = match transform_function {
             transform::TransformFunction::Multiply => self.value.multiply(*args.get(0).unwrap()),
             transform::TransformFunction::Divide => self.value.divide(*args.get(0).unwrap()),
             transform::TransformFunction::Round => self.value.round_to(*args.get(0).unwrap()),
         };
-        return Event {
+        return Some(Event {
             id: &self.id,
             id_hash: self.id_hash,
             value: value,
             t: self.t,
             transform_list: &self.transform_list,
-        };
+        });
     }
-    pub fn transform_at(&self, ti: usize) -> Event<f64> {
+    pub fn transform_at(&self, ti: usize) -> Option<Event<f64>> {
         let tr = self.transform_list.get(ti).unwrap();
         return self.transform(tr.func, &tr.args);
     }

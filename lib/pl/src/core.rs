@@ -76,8 +76,10 @@ impl Output {
     ) {
         // transform if required
         if event.transform_list.len() > ti {
-            let ev = event.transform_at(ti);
-            self._output(&ev, ti + 1);
+            match event.transform_at(ti) {
+                Some(ev) => self._output(&ev, ti + 1),
+                None => {}
+            }
             return;
         }
         //
@@ -150,12 +152,15 @@ pub fn beacon_stdout() {
 // workers
 pub struct IntervalLoop {
     next_iter: Instant,
-    interval: Duration
+    interval: Duration,
 }
 
 impl IntervalLoop {
     pub fn new(interval: Duration) -> Self {
-        return IntervalLoop { next_iter: Instant::now() + interval, interval: interval }
+        return IntervalLoop {
+            next_iter: Instant::now() + interval,
+            interval: interval,
+        };
     }
 
     pub fn sleep(&mut self) {
