@@ -6,7 +6,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::error::Error;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use transform;
 
 pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
@@ -95,6 +95,7 @@ where
         "multiply" => transform::TransformFunction::Multiply,
         "divide" => transform::TransformFunction::Divide,
         "round" => transform::TransformFunction::Round,
+        "speed" => transform::TransformFunction::CalcSpeed,
         _ => unimplemented!("function {}", func),
     });
 }
@@ -115,6 +116,7 @@ pub type EventTransformList = Vec<EventTransformTask>;
 #[derive(Clone, Copy, Debug)]
 pub struct EventTime {
     time: SystemTime,
+    monotonic: Instant,
     time_format: TimeFormat,
 }
 
@@ -122,6 +124,7 @@ impl EventTime {
     pub fn new(time_format: TimeFormat) -> Self {
         return Self {
             time: SystemTime::now(),
+            monotonic: Instant::now(),
             time_format: time_format,
         };
     }
@@ -201,17 +204,30 @@ impl<'a, T: ToString + transform::Transform> Event<'a, T> {
         args: &Vec<f64>,
     ) -> Option<Event<f64>> {
         let value = match transform_function {
-            transform::TransformFunction::Multiply => self.value.multiply(*args.get(0).unwrap()),
-            transform::TransformFunction::Divide => self.value.divide(*args.get(0).unwrap()),
-            transform::TransformFunction::Round => self.value.round_to(*args.get(0).unwrap()),
+            transform::TransformFunction::Multiply => {
+                Some(self.value.multiply(*args.get(0).unwrap()))
+            }
+            transform::TransformFunction::Divide => Some(self.value.divide(*args.get(0).unwrap())),
+            transform::TransformFunction::Round => Some(self.value.round_to(*args.get(0).unwrap())),
+            transform::TransformFunction::CalcSpeed => self.value.calc_speed(
+                self.id_hash,
+                match args.get(0) {
+                    Some(v) => *v,
+                    None => 1.0,
+                },
+                self.t.monotonic,
+            ),
         };
-        return Some(Event {
-            id: &self.id,
-            id_hash: self.id_hash,
-            value: value,
-            t: self.t,
-            transform_list: &self.transform_list,
-        });
+        return match value {
+            Some(v) => Some(Event {
+                id: &self.id,
+                id_hash: self.id_hash,
+                value: v,
+                t: self.t,
+                transform_list: &self.transform_list,
+            }),
+            None => None,
+        };
     }
     pub fn transform_at(&self, ti: usize) -> Option<Event<f64>> {
         let tr = self.transform_list.get(ti).unwrap();
