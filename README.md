@@ -1,6 +1,7 @@
 # Pulr - pull devices and transform data into events
 
-<img src="https://img.shields.io/badge/license-Apache%202.0-green" /> <img src="https://img.shields.io/badge/rust-2018-blue.svg" />
+<img src="https://img.shields.io/badge/license-Apache%202.0-green" /> <img
+src="https://img.shields.io/badge/rust-2018-blue.svg" />
 
 ## What is Pulr
 
@@ -75,7 +76,9 @@ the main loop in case of failures.
 
 ## Is it fast enough?
 
-Pulr is written in Rust. So it's rocket-fast and super memory efficient.
+Pulr is written in Rust. So it's rocket-fast and super memory efficient. You
+can start a hundred of Pulr processes on a single machine and barely notice any
+load.
 
 The first (draft) Pulr version was written in Python, it isn't supported any
 longer, but kept in "legacy0" branch for a history.
