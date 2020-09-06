@@ -15,6 +15,10 @@ use datatypes::{Event, OutputType};
 use tools::oprint;
 use transform;
 
+pub fn print_debug(s: &String) {
+    println!("{}", s.cyan().dimmed());
+}
+
 pub struct Beacon {
     tp: OutputType,
     beacon_interval: Duration,

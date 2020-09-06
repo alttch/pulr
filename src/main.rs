@@ -1,4 +1,3 @@
-// TODO SNMP
 use argparse::{ArgumentParser, Store, StoreTrue};
 use serde::{Deserialize, Deserializer};
 use std::fs;

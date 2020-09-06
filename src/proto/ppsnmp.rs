@@ -1,12 +1,12 @@
 use pl::IntervalLoop;
 use serde::{Deserialize, Deserializer};
-use std::ffi;
+use std::collections::HashMap;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
 use pl::datatypes;
-use pl::datatypes::{Event, EventTime, GenDataType, GenDataTypeParse, ParseData};
+use pl::datatypes::{Event, EventTime};
 
 use snmp;
 
@@ -22,14 +22,21 @@ fn get_default_version() -> u8 {
     return 2;
 }
 
+fn get_default_community() -> String {
+    return "public".to_string();
+}
+
 define_de_source!(DEFAULT_SNMP_PORT);
 
 #[derive(Deserialize)]
 struct SNMPProto {
-    name: String,
+    //name: String,
     #[serde(deserialize_with = "de_source")]
     source: HostPort,
+    #[serde(default = "get_default_version")]
     version: u8,
+    #[serde(default = "get_default_community")]
+    community: String,
 }
 
 fn get_default_non_repeat() -> u32 {
@@ -57,7 +64,7 @@ fn get_default_set_id() -> Option<String> {
 
 #[derive(Deserialize)]
 struct SNMPProcess {
-    offset: String,
+    oid: String,
     #[serde(alias = "set-id", default = "get_default_set_id")]
     set_id: Option<String>,
     #[serde(default = "datatypes::empty_transform_task")]
@@ -69,21 +76,24 @@ struct SNMPPullData {
     oids: Vec<Vec<u32>>,
     non_repeat: u32,
     max_repeat: u32,
+    bulk: bool,
 }
 
 // TODO: move some fields to de_
 struct SNMPDataProcessInfo {
+    oid: String,
     set_id: Option<String>,
     transform: datatypes::EventTransformList,
 }
 
+#[derive(Debug)]
 enum SNMPValue {
     SBoolean(u8),
     SUint32(u32),
     SInt64(i64),
     SUint64(u64),
     SStr(String),
-    Null,
+    SNull,
 }
 
 fn parse_snmp_val(value: snmp::Value) -> SNMPValue {
@@ -98,19 +108,32 @@ fn parse_snmp_val(value: snmp::Value) -> SNMPValue {
             }
         }
         Integer(v) => SInt64(v),
-        _ => SNMPValue::Null,
+        OctetString(v) => SStr(String::from_utf8_lossy(v).to_string()),
+        ObjectIdentifier(ref v) => SStr(v.to_string()),
+        IpAddress(v) => SStr(format!("{}.{}.{}.{}", v[0], v[1], v[2], v[3])),
+        Counter32(v) => SUint32(v),
+        Unsigned32(v) => SUint32(v),
+        Timeticks(v) => SUint32(v),
+        Counter64(v) => SUint64(v),
+        _ => SNull,
     };
 }
 
-struct SNMPResult {
-    name: String,
-    value: SNMPValue,
+fn prepare_oid(oid: String) -> String {
+    let mut res = oid;
+    if res.chars().next().unwrap() == '.' {
+        res.remove(0);
+    } else if res.starts_with("iso.") {
+        res = "1.".to_string() + &res[4..];
+    }
+    return res;
 }
 
-define_task_result!(Vec<SNMPResult>);
+define_task_result!(HashMap<String, SNMPValue>);
 
 pub fn run(
     inloop: bool,
+    verbose: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,
@@ -126,29 +149,43 @@ pub fn run(
     }
     let mut pulls: Vec<SNMPPullData> = Vec::new();
     let mut dp_list: Vec<Vec<SNMPDataProcessInfo>> = Vec::new();
-    // TODO implement ignore list for bulk requests
     for p in config.pull {
         let mut process_data_vec: Vec<SNMPDataProcessInfo> = Vec::new();
         for prc in p.process {
             process_data_vec.push(SNMPDataProcessInfo {
+                oid: prepare_oid(prc.oid),
                 set_id: prc.set_id,
                 transform: prc.transform,
             });
         }
         let mut oids: Vec<Vec<u32>> = Vec::new();
         for oid in p.oids {
-            oids.push(oid.split("/").map(|s| s.parse::<u32>().unwrap()).collect());
+            oids.push(
+                prepare_oid(oid)
+                    .split(".")
+                    .map(|s| s.parse::<u32>().unwrap())
+                    .collect(),
+            );
         }
+        let bulk: bool = p.max_repeat > 1 || oids.len() > 1;
         pulls.push(SNMPPullData {
             oids: oids,
             non_repeat: p.non_repeat,
             max_repeat: p.max_repeat,
+            bulk: bulk,
         });
         dp_list.push(process_data_vec);
     }
     // prepare & launch processor
     // move iter to lib
     let mut pull_loop = IntervalLoop::new(interval);
+    let mut sess = snmp::SyncSession::new(
+        format!("{}:{}", config.proto.source.host, config.proto.source.port),
+        config.proto.community.as_bytes(),
+        Some(timeout),
+        0,
+    )
+    .unwrap();
     let (tx, rx) = mpsc::channel();
     // data processor
     let processor = thread::spawn(move || loop {
@@ -158,40 +195,90 @@ pub fn run(
             Some(v) => v,
             None => break,
         };
+        if verbose {
+            pl::print_debug(&"SNMP result\n--------------".to_string());
+            for (k, v) in snmp_result.iter() {
+                pl::print_debug(&format!("{} = '{:?}'", k, v))
+            }
+            pl::print_debug(&"--------------".to_string());
+        }
         let i = w.work_id.unwrap();
-        for d in dp_list.get(i).unwrap() {}
+        for d in dp_list.get(i).unwrap() {
+            macro_rules! process_snmp_result {
+                ($i:path, $v:path) => {
+                    let event = Event::new(&$i, *$v, &d.transform, &t);
+                    out.output(&event);
+                };
+            }
+            use SNMPValue::*;
+            match snmp_result.get(&d.oid) {
+                Some(v) => {
+                    let id = match &d.set_id {
+                        Some(v) => v,
+                        None => &d.oid,
+                    };
+                    match v {
+                        SBoolean(v) => {
+                            process_snmp_result!(id, v);
+                        }
+                        SUint32(v) => {
+                            process_snmp_result!(id, v);
+                        }
+                        SInt64(v) => {
+                            process_snmp_result!(id, v);
+                        }
+                        SUint64(v) => {
+                            process_snmp_result!(id, v);
+                        }
+                        SStr(v) => {
+                            let event = Event::new(&id, v.to_owned(), &d.transform, &t);
+                            out.output(&event);
+                        }
+                        SNull => {
+                            pl::print_debug(&format!("Unsupported datatype value of {}", d.oid));
+                        }
+                    }
+                }
+                None => {
+                    if verbose {
+                        pl::print_debug(&format!("No data of {}", d.oid));
+                    }
+                }
+            }
+        }
     });
     // pulling loop
     loop {
         for work_id in 0..pulls.len() {
-            let mut sess = snmp::SyncSession::new(
-                format!("{}:{}", config.proto.source.host, config.proto.source.port),
-                "public".as_bytes(),
-                Some(timeout),
-                0,
-            )
-            .unwrap();
             let call_time = EventTime::new(time_format);
             let p = pulls.get(work_id).unwrap();
-            let mut response: snmp::SnmpPdu;
-            let mut result: Vec<SNMPResult> = Vec::new();
             // TODO: move slices to prepare stage
-            if p.oids.len() > 1 {
+            if p.bulk {
+                if verbose {
+                    pl::print_debug(&format!("SNMP GETBULK {:?}", p.oids));
+                }
                 let mut z = vec![];
                 for o in &p.oids {
                     z.push(o.as_slice());
                 }
-                let mut response = sess
+                let response = sess
                     .getbulk(z.as_slice(), p.non_repeat, p.max_repeat)
                     .expect("SNMP GETBULK error");
+                let mut result: HashMap<String, SNMPValue> = HashMap::new();
                 for (name, val) in response.varbinds {
-                    result.push(SNMPResult {
-                        name: name.to_string(),
-                        value: parse_snmp_val(val),
-                    });
+                    result.insert(name.to_string(), parse_snmp_val(val));
                 }
+                tx.send(TaskResult {
+                    data: Some(result),
+                    work_id: Some(work_id),
+                    t: call_time,
+                })
+                .unwrap();
             } else {
                 let o = p.oids.get(0).unwrap();
+                if verbose {
+                    pl::print_debug(&format!("SNMP GET {:?}", o));
+                }
                 let mut response = sess
                     .getnext(o.as_slice())
                     .expect(&format!("SNMP GET error {:?}", o));
@@ -199,17 +286,15 @@ pub fn run(
                     .varbinds
                     .next()
                     .expect(&format!("SNMP GET parse error {:?}", o));
-                result.push(SNMPResult {
-                    name: name.to_string(),
-                    value: parse_snmp_val(val),
-                });
+                let mut result: HashMap<String, SNMPValue> = HashMap::new();
+                result.insert(name.to_string(), parse_snmp_val(val));
+                tx.send(TaskResult {
+                    data: Some(result),
+                    work_id: Some(work_id),
+                    t: call_time,
+                })
+                .unwrap();
             }
-            tx.send(TaskResult {
-                data: Some(result),
-                work_id: Some(work_id),
-                t: call_time,
-            })
-            .unwrap();
         }
         if !inloop {
             break;
