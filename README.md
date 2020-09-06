@@ -38,15 +38,9 @@ pulr -F modbus.yml -L
 
 ## Installing
 
-```shell
-pip3 insall pulr
-# for SNMP support
-pip3 install python3-netsnmp
-# for Modbus
-pip3 install pymodbus
-# optionally, install rapidjson to make JSON output faster
-pip3 install python-rapidjson
-```
+Download a static binary from releases page and enjoy.
+
+# Building from source
 
 Ethernet/IP support requires
 [libplctag](https://github.com/libplctag/libplctag), download and install it:
