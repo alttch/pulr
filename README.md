@@ -76,7 +76,7 @@ can start a hundred of Pulr processes on a single machine and barely notice any
 load.
 
 The first (draft) Pulr version was written in Python, it isn't supported any
-longer, but kept in "legacy0" branch for a history.
+longer, but kept in "legacy0" branch.
 
 ## Protocols
 
