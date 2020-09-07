@@ -1,3 +1,4 @@
+// TODO: move "if verbose" to macro
 use argparse::{ArgumentParser, Store, StoreTrue};
 use serde::{Deserialize, Deserializer};
 use std::fs;
