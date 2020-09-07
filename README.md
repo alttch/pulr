@@ -55,7 +55,7 @@ sudo make install
 sudo ldconfig
 ```
 
-After either run "make release\_x86\_64" or "make release\_armhf" or use a
+After, either run "make release\_x86\_64" or "make release\_armhf" or use a
 proper build\*.rs file and build it with *cargo*:
 
 ```shell
