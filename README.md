@@ -55,6 +55,14 @@ sudo make install
 sudo ldconfig
 ```
 
+After either run "make release\_x86\_64" or "make release\_armhf" or use a
+proper build\*.rs file and build it with *cargo*:
+
+```shell
+cp -vf build-x86_64.rs build.rs
+cargo build --release # or custom options
+```
+
 ## Configuring
 
 Look in ./examples for the example configurations.
