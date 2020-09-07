@@ -36,9 +36,11 @@ release_armhf:
 release-upload: release-upload-x86_64 release-upload-arm
 
 release-upload-x86_64:
-	cd ./target/x86_64-unknown-linux-musl/release && tar czvf /tmp/pulr.linux-x86_64-musl.tgz pulr
+	cd ./target/x86_64-unknown-linux-musl/release && \
+	 	tar --owner=root --group=root -czvf /tmp/pulr.linux-x86_64-musl.tgz pulr
 	./.dev/release-upload.sh pulr.linux-x86_64-musl.tgz
 
 release-upload-arm:
-	cd ./target/arm-unknown-linux-musleabihf/release && tar czvf /tmp/pulr.linux-arm-musleabihf.tgz pulr
+	cd ./target/arm-unknown-linux-musleabihf/release && \
+	 	tar --owner=root --group=root -czvf /tmp/pulr.linux-arm-musleabihf.tgz pulr
 	./.dev/release-upload.sh pulr.linux-arm-musleabihf.tgz
