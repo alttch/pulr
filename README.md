@@ -1,4 +1,4 @@
-# Pulr - pull devices and transform data into events
+# Pulr - pull fieldbus devices and transform data into events
 
 <img src="https://img.shields.io/badge/license-Apache%202.0-green" /> <img
 src="https://img.shields.io/badge/rust-2018-pink.svg" />
