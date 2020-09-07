@@ -29,7 +29,7 @@ release_x86_64:
 	strip ./target/x86_64-unknown-linux-musl/release/pulr
 
 release_armhf:
-	cp -vf build-arm.rs build.rs
+	cp -vf build-armhf.rs build.rs
 	cargo build --target arm-unknown-linux-musleabihf --release
 	/usr/bin/arm-linux-gnueabihf-strip ./target/arm-unknown-linux-musleabihf/release/pulr
 
