@@ -11,7 +11,7 @@ use std::time::Duration;
 use pl::tools::GetBit;
 use pl::IntervalLoop;
 
-use datatypes::{Event, EventTime, GenDataType, GenDataTypeParse, ParseData};
+use datatypes::{GenDataType, GenDataTypeParse, ParseData};
 use pl::datatypes;
 
 const DEFAULT_MODBUS_PORT: u16 = 502;
@@ -145,8 +145,7 @@ pub fn run(
     cfg: String,
     timeout: Duration,
     interval: Duration,
-    time_format: datatypes::TimeFormat,
-    out: pl::Output,
+    core: pl::Core,
     beacon: &mut pl::Beacon,
 ) {
     // process config
@@ -217,7 +216,7 @@ pub fn run(
         for d in dp_list.get(i).unwrap() {
             match d.tp {
                 GenDataType::Bit => {
-                    let event = Event::new(
+                    let event = core.create_event(
                         &d.set_id,
                         v.get(d.offset.offset as usize)
                             .expect(ERROR_OOB)
@@ -225,32 +224,36 @@ pub fn run(
                         &d.transform,
                         &t,
                     );
-                    out.output(&event);
+                    core.output(&event);
                 }
                 GenDataType::Uint16 => {
-                    let event = Event::new(
+                    let event = core.create_event(
                         &d.set_id,
                         *v.get(d.offset.offset as usize).expect(ERROR_OOB),
                         &d.transform,
                         &t,
                     );
-                    out.output(&event);
+                    core.output(&event);
                 }
                 GenDataType::Int16 => {
-                    let event = Event::new(
+                    let event = core.create_event(
                         &d.set_id,
                         *v.get(d.offset.offset as usize).expect(ERROR_OOB) as i16,
                         &d.transform,
                         &t,
                     );
-                    out.output(&event);
+                    core.output(&event);
                 }
                 GenDataType::Uint32 => {
                     let v1 = v.get(d.offset.offset as usize).expect(ERROR_OOB);
                     let v2 = v.get((d.offset.offset + 1) as usize).expect(ERROR_OOB);
-                    let event =
-                        Event::new(&d.set_id, *v1 as u32 * 65536 + *v2 as u32, &d.transform, &t);
-                    out.output(&event);
+                    let event = core.create_event(
+                        &d.set_id,
+                        *v1 as u32 * 65536 + *v2 as u32,
+                        &d.transform,
+                        &t,
+                    );
+                    core.output(&event);
                 }
                 GenDataType::Int32 => {
                     let v1 = match v.get(d.offset.offset as usize) {
@@ -261,13 +264,13 @@ pub fn run(
                         Some(z) => z,
                         None => panic!(ERROR_OOB),
                     };
-                    let event = Event::new(
+                    let event = core.create_event(
                         &d.set_id,
                         (*v1 as u32 * 65536 + *v2 as u32) as i32,
                         &d.transform,
                         &t,
                     );
-                    out.output(&event);
+                    core.output(&event);
                 }
                 GenDataType::Real32 => {
                     let v1 = match v.get(d.offset.offset as usize) {
@@ -279,8 +282,8 @@ pub fn run(
                         None => panic!(ERROR_OOB),
                     };
                     let val: f32 = Ieee754::from_bits(*v2 as u32 * 65536 + *v1 as u32);
-                    let event = Event::new(&d.set_id, val, &d.transform, &t);
-                    out.output(&event);
+                    let event = core.create_event(&d.set_id, val, &d.transform, &t);
+                    core.output(&event);
                 }
                 _ => unimplemented!("data type unimplemented: {}", d.tp),
             };
@@ -289,7 +292,7 @@ pub fn run(
     // pulling loop
     loop {
         for i in 0..pulls.len() {
-            let call_time = EventTime::new(time_format);
+            let call_time = core.create_event_time();
             let p = pulls.get(i).unwrap();
             if verbose {
                 pl::print_debug(&format!("reading registers {:?}", p));

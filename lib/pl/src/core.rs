@@ -56,13 +56,37 @@ use std::cell::RefCell;
 thread_local!(static EVENT_CACHE: RefCell<HashMap<u64, String>> = RefCell::new(HashMap::new()));
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub struct Output {
+pub struct Core {
     tp: OutputType,
+    event_output_flags: datatypes::OutputFlags,
+    time_format: datatypes::TimeFormat,
 }
 
-impl Output {
-    pub fn new(output_type: OutputType) -> Self {
-        return Output { tp: output_type };
+impl Core {
+    pub fn new(
+        output_type: OutputType,
+        event_output_flags: datatypes::OutputFlags,
+        time_format: datatypes::TimeFormat,
+    ) -> Self {
+        return Self {
+            tp: output_type,
+            event_output_flags: event_output_flags,
+            time_format: time_format,
+        };
+    }
+
+    pub fn create_event_time(self) -> datatypes::EventTime {
+        return datatypes::EventTime::new(self.time_format);
+    }
+
+    pub fn create_event<'a, T: ToString + transform::Transform>(
+        self,
+        id: &'a String,
+        value: T,
+        transform: &'a datatypes::EventTransformList,
+        t: &'a datatypes::EventTime,
+    ) -> Event<'a, T> {
+        return Event::new(id, value, transform, t, self.event_output_flags);
     }
 
     pub fn output<T: serde::Serialize + std::fmt::Display + transform::Transform>(

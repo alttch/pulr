@@ -57,8 +57,19 @@ pub enum OutputType {
     StdoutEvaDatapuller,
 }
 
-pub fn get_default_output() -> OutputType {
-    return OutputType::Stdout;
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct OutputFlags {
+    json_short: bool,
+}
+
+impl OutputFlags {
+    pub fn empty() -> Self {
+        return Self { json_short: false };
+    }
+}
+
+pub fn get_default_output() -> (OutputType, OutputFlags) {
+    return (OutputType::Stdout, OutputFlags::empty());
 }
 
 #[derive(Debug)]
@@ -72,12 +83,15 @@ impl fmt::Display for OutputTypeError {
     }
 }
 
-pub fn get_output_type(output_type: &String) -> Result<OutputType, OutputTypeError> {
+pub fn get_output_type(output_type: &String) -> Result<(OutputType, OutputFlags), OutputTypeError> {
     return match output_type.to_lowercase().as_str() {
-        "stdout" | "text" | "plain" | "-" => Ok(OutputType::Stdout),
-        "csv" => Ok(OutputType::StdoutCsv),
-        "ndjson" | "json" => Ok(OutputType::StdoutNdJson),
-        "eva/datapuller" | "eva" => Ok(OutputType::StdoutEvaDatapuller),
+        "stdout" | "text" | "plain" | "-" => Ok((OutputType::Stdout, OutputFlags::empty())),
+        "csv" => Ok((OutputType::StdoutCsv, OutputFlags::empty())),
+        "ndjson" | "json" => Ok((OutputType::StdoutNdJson, OutputFlags::empty())),
+        "ndjson/short" | "json/short" | "ndjson/s" | "json/s" => {
+            Ok((OutputType::StdoutNdJson, OutputFlags { json_short: true }))
+        }
+        "eva/datapuller" | "eva" => Ok((OutputType::StdoutEvaDatapuller, OutputFlags::empty())),
         _ => Err(OutputTypeError {}),
     };
 }
@@ -163,6 +177,7 @@ pub struct Event<'a, T: ToString> {
     pub value: T,
     pub t: &'a EventTime,
     pub transform_list: &'a EventTransformList,
+    pub output_flags: OutputFlags,
 }
 
 impl<'a, T: serde::Serialize + std::fmt::Display> Serialize for Event<'a, T> {
@@ -170,15 +185,20 @@ impl<'a, T: serde::Serialize + std::fmt::Display> Serialize for Event<'a, T> {
     where
         S: Serializer,
     {
-        let mut map = serializer.serialize_map(Some(3)).unwrap();
-        map.serialize_entry("id", &self.id).unwrap();
-        map.serialize_entry("value", &self.value).unwrap();
+        let mut map;
+        if self.output_flags.json_short {
+            map = serializer.serialize_map(Some(2)).unwrap();
+            map.serialize_entry(&self.id, &self.value).unwrap();
+        } else {
+            map = serializer.serialize_map(Some(3)).unwrap();
+            map.serialize_entry("id", &self.id).unwrap();
+            map.serialize_entry("value", &self.value).unwrap();
+        }
         match self.t.time_format {
             TimeFormat::Raw => map.serialize_entry("time", &self.t.as_secs()).unwrap(),
             TimeFormat::Rfc3339 => map.serialize_entry("time", &self.t.to_string()).unwrap(),
             _ => {}
         }
-        //map.serialize_entry("time", &self.t.to_string());
         return map.end();
     }
 }
@@ -189,6 +209,7 @@ impl<'a, T: ToString + transform::Transform> Event<'a, T> {
         value: T,
         transform: &'a EventTransformList,
         t: &'a EventTime,
+        output_flags: OutputFlags,
     ) -> Self {
         return Event {
             id: id,
@@ -196,6 +217,7 @@ impl<'a, T: ToString + transform::Transform> Event<'a, T> {
             value: value,
             t: t,
             transform_list: transform,
+            output_flags: output_flags,
         };
     }
     pub fn transform(
@@ -225,6 +247,7 @@ impl<'a, T: ToString + transform::Transform> Event<'a, T> {
                 value: v,
                 t: self.t,
                 transform_list: &self.transform_list,
+                output_flags: self.output_flags,
             }),
             None => None,
         };

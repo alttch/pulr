@@ -17,7 +17,7 @@ macro_rules! terminate_processor {
             .send(TaskResult {
                 data: None,
                 work_id: None,
-                t: EventTime::new(TimeFormat::Omit),
+                t: pl::datatypes::EventTime::new(TimeFormat::Omit),
             })
             .unwrap();
         $processor.join().unwrap();

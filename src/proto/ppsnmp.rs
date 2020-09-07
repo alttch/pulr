@@ -6,7 +6,6 @@ use std::thread;
 use std::time::Duration;
 
 use pl::datatypes;
-use pl::datatypes::{Event, EventTime};
 
 use snmp;
 
@@ -137,8 +136,7 @@ pub fn run(
     cfg: String,
     timeout: Duration,
     interval: Duration,
-    time_format: datatypes::TimeFormat,
-    out: pl::Output,
+    core: pl::Core,
     beacon: &mut pl::Beacon,
 ) {
     // process config
@@ -210,8 +208,8 @@ pub fn run(
         for d in dp_list.get(i).unwrap() {
             macro_rules! process_snmp_result {
                 ($i:path, $v:path) => {
-                    let event = Event::new(&$i, *$v, &d.transform, &t);
-                    out.output(&event);
+                    let event = core.create_event(&$i, *$v, &d.transform, &t);
+                    core.output(&event);
                 };
             }
             use SNMPValue::*;
@@ -235,8 +233,8 @@ pub fn run(
                             process_snmp_result!(id, v);
                         }
                         SStr(v) => {
-                            let event = Event::new(&id, v.to_owned(), &d.transform, &t);
-                            out.output(&event);
+                            let event = core.create_event(&id, v.to_owned(), &d.transform, &t);
+                            core.output(&event);
                         }
                         SNull => {
                             pl::print_debug(&format!("Unsupported datatype value of {}", d.oid));
@@ -254,7 +252,7 @@ pub fn run(
     // pulling loop
     loop {
         for work_id in 0..pulls.len() {
-            let call_time = EventTime::new(time_format);
+            let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();
             // TODO: move slices to prepare stage
             if p.bulk {

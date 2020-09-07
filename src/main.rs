@@ -6,7 +6,7 @@ use std::time::Duration;
 use pl;
 
 #[path = "proto/common.rs"]
-#[macro_use] 
+#[macro_use]
 mod common;
 
 #[path = "proto/ppmodbus.rs"]
@@ -37,7 +37,9 @@ struct GenProto {
     name: String,
 }
 
-fn de_output<'de, D>(deserializer: D) -> serde::export::Result<pl::datatypes::OutputType, D::Error>
+fn de_output<'de, D>(
+    deserializer: D,
+) -> serde::export::Result<(pl::datatypes::OutputType, pl::datatypes::OutputFlags), D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -69,7 +71,7 @@ struct Config {
         default = "pl::datatypes::get_default_output",
         deserialize_with = "de_output"
     )]
-    output: pl::datatypes::OutputType,
+    output: (pl::datatypes::OutputType, pl::datatypes::OutputFlags),
     proto: GenProto,
     #[serde(
         alias = "time-format",
@@ -90,8 +92,11 @@ fn main() {
         ap.set_description(greeting.as_str());
         ap.refer(&mut in_loop)
             .add_option(&["-L", "--loop"], StoreTrue, "Loop (production)");
-        ap.refer(&mut verbose)
-            .add_option(&["-v", "--verbose"], StoreTrue, "Verbose output (debug)");
+        ap.refer(&mut verbose).add_option(
+            &["-v", "--verbose"],
+            StoreTrue,
+            "Verbose output (debug)",
+        );
         ap.refer(&mut cfgfile)
             .add_option(&["-F", "--config"], Store, "Configuration file")
             .metavar("CONFIG")
@@ -116,47 +121,20 @@ fn main() {
     let interval = Duration::from_micros((1.0 / config.freq as f64 * 1_000_000.0) as u64);
 
     {
-        let out = pl::Output::new(otp);
-        let mut beacon = pl::Beacon::new(otp, beacon_interval);
+        let core = pl::Core::new(otp.0, otp.1, config.time_format);
+        let mut beacon = pl::Beacon::new(otp.0, beacon_interval);
 
         match proto_name {
             "modbus" => {
-                ppmodbus::run(
-                    in_loop,
-                    verbose,
-                    cfg,
-                    timeout,
-                    interval,
-                    config.time_format,
-                    out,
-                    &mut beacon,
-                );
+                ppmodbus::run(in_loop, verbose, cfg, timeout, interval, core, &mut beacon);
                 ()
             }
             "enip" => {
-                ppenip::run(
-                    in_loop,
-                    verbose,
-                    cfg,
-                    timeout,
-                    interval,
-                    config.time_format,
-                    out,
-                    &mut beacon,
-                );
+                ppenip::run(in_loop, verbose, cfg, timeout, interval, core, &mut beacon);
                 ()
             }
             "snmp" => {
-                ppsnmp::run(
-                    in_loop,
-                    verbose,
-                    cfg,
-                    timeout,
-                    interval,
-                    config.time_format,
-                    out,
-                    &mut beacon,
-                );
+                ppsnmp::run(in_loop, verbose, cfg, timeout, interval, core, &mut beacon);
                 ()
             }
             _ => unimplemented!("protocol {}", proto_name),

@@ -7,7 +7,7 @@ use std::thread;
 use std::time::Duration;
 
 use pl::datatypes;
-use pl::datatypes::{Event, EventTime, GenDataType, GenDataTypeParse, ParseData};
+use pl::datatypes::{GenDataType, GenDataTypeParse, ParseData};
 
 use plctag;
 
@@ -82,8 +82,7 @@ pub fn run(
     cfg: String,
     timeout: Duration,
     interval: Duration,
-    time_format: datatypes::TimeFormat,
-    out: pl::Output,
+    core: pl::Core,
     beacon: &mut pl::Beacon,
 ) {
     // process config
@@ -152,9 +151,13 @@ pub fn run(
             macro_rules! process_tag {
                 ($fn:path) => {
                     unsafe {
-                        let event =
-                            Event::new(&d.set_id, $fn(tag_id, d.offset as i32), &d.transform, &t);
-                        out.output(&event);
+                        let event = core.create_event(
+                            &d.set_id,
+                            $fn(tag_id, d.offset as i32),
+                            &d.transform,
+                            &t,
+                        );
+                        core.output(&event);
                     }
                 };
             }
@@ -196,7 +199,7 @@ pub fn run(
     // pulling loop
     loop {
         for work_id in 0..pulls.len() {
-            let call_time = EventTime::new(time_format);
+            let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();
             let tag_id = match active_tags.get(&p.path_hash) {
                 Some(v) => *v,
