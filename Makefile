@@ -36,9 +36,9 @@ release_armhf:
 release-upload: release-upload-x86_64 release-upload-arm
 
 release-upload-x86_64:
-	gzip -c ./target/x86_64-unknown-linux-musl/release/pulr > /tmp/pulr.x86_64-musl.gz
-	./.dev/release-upload.sh pulr.x86_64-musl.gz
+	cd ./target/x86_64-unknown-linux-musl/release && tar czvf /tmp/pulr.x86_64-musl.tgz pulr
+	./.dev/release-upload.sh pulr.x86_64-musl.tgz
 
 release-upload-arm:
-	gzip -c ./target/arm-unknown-linux-musleabihf/release/pulr > /tmp/pulr.arm-musleabihf.gz
-	./.dev/release-upload.sh pulr.arm-musleabihf.gz
+	cd ./target/arm-unknown-linux-musleabihf/release && tar czvf /tmp/pulr.arm-musleabihf.tgz pulr
+	./.dev/release-upload.sh pulr.arm-musleabihf.tgz
