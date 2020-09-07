@@ -107,8 +107,10 @@ fn main() {
     let mut tcol = "time".to_owned();
     let mut mcol = String::new();
     let mut vcol = "value".to_owned();
+    let greeting = "Sends metrics from STDIN (ndjson) to InfluxDB";
     {
         let mut ap = ArgumentParser::new();
+        ap.set_description(greeting);
         ap.refer(&mut basecol)
             .add_argument(
                 "BASE",
@@ -178,7 +180,7 @@ fn main() {
                 }
                 let qts = format!(" {}", timestamp);
                 if verbose {
-                    println!("{}{}{}", q.cyan().bold(), qm.blue().bold(), qts.yellow());
+                    println!("{}{}{}", q.cyan().bold(), qm.blue().bold(), qts.green());
                 }
                 q = q + &qm + &qts;
             }
