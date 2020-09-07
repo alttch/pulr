@@ -117,7 +117,11 @@ fn main() {
             )
             .required();
         ap.refer(&mut tcol)
-            .add_option(&["-T", "--time-col"], Store, "Time column")
+            .add_option(
+                &["-T", "--time-col"],
+                Store,
+                "Time column, timestamp (seconds) or RFC3339",
+            )
             .metavar("NAME");
         ap.refer(&mut mcol)
             .add_option(
@@ -130,7 +134,7 @@ fn main() {
             .add_option(
                 &["-V", "--value-col"],
                 Store,
-                "Value column (default: value, not used for K=V)",
+                "Value column (default: value, not used for K=V), non-numeric values are skipped",
             )
             .metavar("NAME");
         ap.refer(&mut verbose).add_option(
