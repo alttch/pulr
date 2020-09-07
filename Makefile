@@ -1,4 +1,4 @@
-VERSION=$(shell awk '/^version/{print substr($$3, 2, length($$3)-2)}' Cargo.toml)
+VERSION=1.0.0
 
 all: debug
 
@@ -12,6 +12,10 @@ debug:
 tag:
 	git tag -a v${VERSION}
 	git push origin --tags
+
+ver:
+	sed -i 's/^version = ".*/version = "${VERSION}"/g' Cargo.toml
+	sed -i 's/^const VERSION.*/const VERSION: \&str = "${VERSION}";/g' src/main.rs
 
 release: release_x86_64 release_armhf
 
