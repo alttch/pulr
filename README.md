@@ -119,7 +119,7 @@ However it differs from the draft Python version:
 * "version" field in configuration file should be set to "2"
 
 * "transform" syntax was changed a little bit, see config examples. "speed"
-  function renamed to "calc_speed".
+  function renamed to "calc\_speed".
 
 * more command line args.
 
