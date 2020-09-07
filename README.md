@@ -111,6 +111,26 @@ Currently supported:
 Optional field "time-format" adds time to data output. Valid values are:
 "rfc3339", "timestamp" (alias: raw).
 
+### JSON output customization
+
+By default, data in JSON is outputted as
+
+```json
+{ "time": "time rfc 3339/timestamp", "id": "metric id", "value": "event value" }
+{ "time": "time rfc 3339/timestamp", "id": "metric id", "value": "event value" }
+{ "time": "time rfc 3339/timestamp", "id": "metric id", "value": "event value" }
+```
+
+Specifying output format as **ndjson/short** (aliases: *ndjson/s*,
+*json/short*, *json/s*), this can be switched to "short" format, with only 2
+fields: "time" and "metric id":
+
+```json
+{ "time": "time rfc 3339/timestamp", "metric id": "event value" }
+{ "time": "time rfc 3339/timestamp", "metric id": "event value" }
+{ "time": "time rfc 3339/timestamp", "metric id": "event value" }
+```
+
 ## Rust version difference
 
 As it was mentioned above, Rust version is fast. It's very fast and efficient.
