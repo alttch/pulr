@@ -22,6 +22,9 @@ pull:
   - oids:
     # MIBs are not supported at this moment, OIDs should be specified in
     # a numeric format
+    #
+    # Types supported: Unsigned(i32), Integer(i64), OctetStrng, OID, IPAddrss,
+    # Counter32, Counter64, Timeticks. Unsupported types are ignored.
     - 1.3.6.1.2.1.1.1
     - 1.3.6.1.2.1.1.3
     process:
