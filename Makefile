@@ -5,8 +5,10 @@ all: debug
 clean:
 	find . -type d -name target -exec rm -rf {} \; || exit 0
 	find . -type f -name Cargo.lock -exec rm -f {} \; || exit 0
+	rm -f /tmp/pulr.*
 
 debug:
+	cp -vf build-x86_64.rs build.rs
 	cargo build
 
 tag:
@@ -39,8 +41,10 @@ release-upload-x86_64:
 	cd ./target/x86_64-unknown-linux-musl/release && \
 	 	tar --owner=root --group=root -czvf /tmp/pulr.linux-x86_64-musl.tgz pulr
 	./.dev/release-upload.sh pulr.linux-x86_64-musl.tgz
+	rm -f /tmp/pulr.linux-x86_64-musl.tgz
 
 release-upload-arm:
 	cd ./target/arm-unknown-linux-musleabihf/release && \
 	 	tar --owner=root --group=root -czvf /tmp/pulr.linux-arm-musleabihf.tgz pulr
 	./.dev/release-upload.sh pulr.linux-arm-musleabihf.tgz
+	rm -f /tmp/pulr.linux-arm-musleabihf.tgz
