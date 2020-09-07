@@ -135,7 +135,6 @@ pub fn run(
         dp_list.push(process_data_vec);
     }
     // prepare & launch processor
-    // move iter to lib
     let mut pull_loop = IntervalLoop::new(interval);
     let (tx, rx) = mpsc::channel();
     // data processor

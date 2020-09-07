@@ -175,7 +175,6 @@ pub fn run(
         dp_list.push(process_data_vec);
     }
     // prepare & launch processor
-    // move iter to lib
     let mut pull_loop = IntervalLoop::new(interval);
     let mut sess = snmp::SyncSession::new(
         format!("{}:{}", config.proto.source.host, config.proto.source.port),
