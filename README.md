@@ -74,9 +74,6 @@ pull and process the data as fast as possible, but die as soon as any errors
 occur. Pulr is built to be started by supervisor, which collects the data from
 it and restarts the process on crashes.
 
-But it's possible to run the tool with "-R" flag, which tells Pulr to restart
-the main loop in case of failures.
-
 ## Is it fast enough?
 
 Pulr is written in Rust. So it's rocket-fast and super memory efficient. You
@@ -130,6 +127,78 @@ fields: "time" and "metric id":
 { "time": "time rfc 3339/timestamp", "metric id": "event value" }
 { "time": "time rfc 3339/timestamp", "metric id": "event value" }
 ```
+
+## Real life example
+
+### Running manually
+
+Consider you have a device, want to collect metrics from it and store them into
+[InfluxDB](https://www.influxdata.com/). Pulr comes with a tiny tool called
+**ndj2influx**, which allows parsing NDJSON data and storing it directly into
+InfluxDB.
+
+It's highly recommended to set "time-format" (rfc3339 or raw, doesn't matter)
+to have metrics stored with the same timestamp the pull request has been
+performed.
+
+And full command to get metrics and store will be:
+
+```shell
+pulr -F /path/to/pulr-config.yml -L -O ndjson | \
+     ndj2influx http://<INFLUXDB-IP-OR-HOST>:8086 \
+         <DATABASE_NAME> @device1 -U <DB_USERNAME>:<PASSWORD> -M id -v
+```
+
+Let's explain all options:
+
+* pulr option *-L* tells Pulr to work in loop, continuously pulling the device.
+
+* pulr option *-O ndjson* makes sure Pulr will output data in NDJSON format.
+
+* first two ndj2influx options specify InfluxDB API URL and database name
+
+* the next option should specify base metric column (device name). As pulr
+  doesn't input it, set it for all metrics to *@device1*
+
+* option *-U* is used to pass InfluxDB authentication. If auth isn't turned on,
+  the option is not requited.
+
+* option *-M id* is to use "id" column as metric id.
+
+* option *-v* is for verbose output and can be omitted in production.
+
+The same result will be get with command:
+
+```shell
+pulr -F /path/to/pulr-config.yml -L -O ndjson/short | \
+     ndj2influx http://<INFLUXDB-IP-OR-HOST>:8086 \
+         <DATABASE_NAME> @device1 -U <DB_USERNAME>:<PASSWORD> -v
+```
+
+everything is almost the same, except Pulr is told to produce "short"
+(id=value) JSON output and option *-M id* for ndj2influx can be omitted.
+
+### Running with supervisor
+
+Both tools will crash as soon as any problem occurs. They're made this way,
+because in production "it's better crash and be restarted than freeze".
+
+To automatically restart the tools, let's use any supervisor, e.g.
+[Supervisord](http://supervisord.org/) (available in almost all Linux distros).
+
+Create a simple config and put it to */etc/supervisor/conf.d/pulr-device1.conf*
+
+```ini
+[program:pulr-device1]
+command=sh -c "sleep 1 && pulr -F /path/to/pulr-config.yml -L -O ndjson | ndj2influx http://<dbhost>:8086 pulr @router1 -U <DB_USERNAME>:<PASSWORD> -M id -v"
+autorestart=true
+autostart=true
+priority=100
+events=PROCESS_STATE
+```
+
+That's all. Supervisord will monitor the processes and restart them if
+necessary.
 
 ## Rust version difference
 
