@@ -47,7 +47,7 @@ release-upload-x86_64:
 	cd ./tools/ndj2influx/target/x86_64-unknown-linux-musl/release && \
 	 	tar --owner=root --group=root -rvf /tmp/pulr.linux-x86_64-musl.tar ndj2influx
 	gzip /tmp/pulr.linux-x86_64-musl.tar
-	#./.dev/release-upload.sh pulr.linux-x86_64-musl.tar.gz
+	./.dev/release-upload.sh pulr.linux-x86_64-musl.tar.gz
 	rm /tmp/pulr.linux-x86_64-musl.tar.gz
 
 release-upload-arm:
@@ -56,5 +56,5 @@ release-upload-arm:
 	cd ./tools/ndj2influx/target/arm-unknown-linux-musleabihf/release && \
 	 	tar --owner=root --group=root -rvf /tmp/pulr.linux-arm-musleabihf.tar ndj2influx
 	gzip /tmp/pulr.linux-arm-musleabihf.tar
-	#./.dev/release-upload.sh pulr.linux-arm-musleabihf.tar.gz
+	./.dev/release-upload.sh pulr.linux-arm-musleabihf.tar.gz
 	rm /tmp/pulr.linux-arm-musleabihf.tar.gz
