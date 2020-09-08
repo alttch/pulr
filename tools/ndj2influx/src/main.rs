@@ -10,7 +10,7 @@ use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use ureq;
 
-const VERSION: &str = "1.0.1";
+const VERSION: &str = "0.0.2";
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &String) -> i64 {
     return match tcol.as_str() {
