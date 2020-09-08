@@ -1,9 +1,9 @@
-// TODO move options to config (basecol, url, database, auth, tcol, mcol, vcol, timeout
 use argparse::{ArgumentParser, Store, StoreTrue};
+use base64;
 use chrono::DateTime;
 use colored::Colorize;
-use base64;
 use std::collections::HashMap;
+use std::env;
 use std::io::{self, BufRead};
 use std::sync::mpsc;
 use std::thread;
@@ -110,7 +110,10 @@ fn main() {
     let mut basecol = String::new();
     let mut url = String::new();
     let mut database = String::new();
-    let mut auth = String::new();
+    let mut auth = match env::var("INFLUXDB_AUTH") {
+        Ok(val) => val,
+        Err(_) => String::new(),
+    };
     let mut verbose: bool = false;
     let mut tcol = "time".to_owned();
     let mut mcol = String::new();
