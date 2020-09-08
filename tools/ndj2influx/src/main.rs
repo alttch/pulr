@@ -1,12 +1,14 @@
 use argparse::{ArgumentParser, Store, StoreTrue};
 use chrono::DateTime;
 use colored::Colorize;
-use reqwest;
+//use reqwest;
+use base64;
 use std::collections::HashMap;
 use std::io::{self, BufRead};
 use std::sync::mpsc;
 use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use ureq;
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &String) -> i64 {
     return match tcol.as_str() {
@@ -113,6 +115,7 @@ fn main() {
     let mut tcol = "time".to_owned();
     let mut mcol = String::new();
     let mut vcol = "value".to_owned();
+    let mut timeout_f = 5.0;
     let greeting = "Sends metrics from STDIN (ndjson) to InfluxDB";
     {
         let mut ap = ArgumentParser::new();
@@ -139,7 +142,8 @@ fn main() {
                 Store,
                 "Time column, timestamp (seconds) or RFC3339, default: 'time'. \
                 use '@' to ignore JSON data and set current
-                time",)
+                time",
+            )
             .metavar("NAME");
         ap.refer(&mut mcol)
             .add_option(
@@ -155,6 +159,9 @@ fn main() {
                 "Value column (default: 'value', not used for K=V), non-numeric values are skipped",
             )
             .metavar("NAME");
+        ap.refer(&mut timeout_f)
+            .add_option(&["--timeout"], Store, "DB timeout (default: 5 sec)")
+            .metavar("NAME");
         ap.refer(&mut verbose).add_option(
             &["-v", "--verbose"],
             StoreTrue,
@@ -162,39 +169,30 @@ fn main() {
         );
         ap.parse_args_or_exit();
     }
-    let (username, password) = match auth.is_empty() {
-        true => ("".to_owned(), "".to_owned()),
-        false => {
-            let mut n = auth.splitn(2, ":");
-            (n.next().unwrap().to_owned(), n.next().unwrap().to_owned())
-        }
-    };
     let base = match basecol.chars().next().unwrap() {
         '@' => &basecol[1..basecol.len()],
         _ => "",
     };
+    if !auth.is_empty() {
+        auth = "Basic ".to_owned() + &base64::encode(auth);
+    }
     let influx_write_url = format!("{}/write?db={}", url, database);
+    let timeout = Duration::from_millis((timeout_f * 1000 as f32) as u64);
     let stdin = io::stdin();
     let (tx, rx) = mpsc::channel();
-    let processor = thread::spawn(move || {
-        let client = reqwest::blocking::Client::new();
-        loop {
-            let q: String = rx.recv().unwrap();
-            if q.is_empty() {
-                break;
-            }
-            let builder = match username.is_empty() {
-                true => client.post(&influx_write_url).body(q),
-                false => client
-                    .post(&influx_write_url)
-                    .body(q)
-                    .basic_auth(&username, Some(&password)),
-            };
-            let res = builder.send().expect("InfluxDB error");
-            let status = res.status();
-            if !status.is_success() {
-                panic!("DB response {}", status);
-            }
+    let processor = thread::spawn(move || loop {
+        let q: String = rx.recv().unwrap();
+        if q.is_empty() {
+            break;
+        }
+        let mut client = ureq::post(&influx_write_url);
+        if !auth.is_empty() {
+            client.set("Authorization", &auth);
+        }
+        client.timeout(timeout);
+        let res = client.send_string(&q);
+        if !res.ok() {
+            panic!("DB error {}: {}", res.status(), res.into_string().unwrap());
         }
     });
     loop {
