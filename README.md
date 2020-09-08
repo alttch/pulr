@@ -167,7 +167,7 @@ Let's explain all options:
 
 * option *-v* is for verbose output and can be omitted in production.
 
-The same result will be get with command:
+The same result is produced with commands:
 
 ```shell
 pulr -F /path/to/pulr-config.yml -L -O ndjson/short | \
