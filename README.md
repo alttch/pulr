@@ -141,7 +141,7 @@ It's highly recommended to set "time-format" (rfc3339 or raw, doesn't matter)
 to have metrics stored with the same timestamp the pull request has been
 performed.
 
-And full command to get metrics and store will be:
+And full command to get and store metrics will be:
 
 ```shell
 pulr -F /path/to/pulr-config.yml -L -O ndjson | \
@@ -158,7 +158,7 @@ Let's explain all options:
 * first two ndj2influx options specify InfluxDB API URL and database name
 
 * the next option should specify base metric column (device name). As pulr
-  doesn't input it, set it for all metrics to *@device1*
+  doesn't output it, set it for all metrics to *@device1*
 
 * option *-U* is used to pass InfluxDB authentication. If auth isn't turned on,
   the option is not requited.
