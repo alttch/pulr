@@ -1,14 +1,16 @@
 use argparse::{ArgumentParser, Store, StoreTrue};
+use base64;
 use chrono::DateTime;
 use colored::Colorize;
-//use reqwest;
-use base64;
 use std::collections::HashMap;
+use std::env;
 use std::io::{self, BufRead};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use ureq;
+
+const VERSION: &str = "0.0.2";
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &String) -> i64 {
     return match tcol.as_str() {
@@ -110,16 +112,22 @@ fn main() {
     let mut basecol = String::new();
     let mut url = String::new();
     let mut database = String::new();
-    let mut auth = String::new();
+    let mut auth = match env::var("INFLUXDB_AUTH") {
+        Ok(val) => val,
+        Err(_) => String::new(),
+    };
     let mut verbose: bool = false;
     let mut tcol = "time".to_owned();
     let mut mcol = String::new();
     let mut vcol = "value".to_owned();
     let mut timeout_f = 5.0;
-    let greeting = "Sends metrics from STDIN (ndjson) to InfluxDB";
+    let greeting = format!(
+        "ndj2influx v{}. Sends metrics from STDIN (ndjson) to InfluxDB",
+        VERSION
+    );
     {
         let mut ap = ArgumentParser::new();
-        ap.set_description(greeting);
+        ap.set_description(&greeting);
         ap.refer(&mut url)
             .add_argument("URL", Store, "InfluxDB URL:Port (without leading slash)")
             .required();
