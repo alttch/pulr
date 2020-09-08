@@ -1,7 +1,7 @@
+// TODO move options to config (basecol, url, database, auth, tcol, mcol, vcol, timeout
 use argparse::{ArgumentParser, Store, StoreTrue};
 use chrono::DateTime;
 use colored::Colorize;
-//use reqwest;
 use base64;
 use std::collections::HashMap;
 use std::io::{self, BufRead};
