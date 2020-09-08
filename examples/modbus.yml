@@ -36,7 +36,7 @@ pull:
       - offset: 0/3
         set-id: sensor:axon/din4.value
 
-        # parse the second byte too
+        # parse the second register too
       - offset: 1/0
         set-id: unit:axon/dout1.status
       - offset: 1/1
