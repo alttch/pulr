@@ -178,7 +178,7 @@ pulr -F /path/to/pulr-config.yml -L -O ndjson/short | \
 everything is almost the same, except Pulr is told to produce "short"
 (id=value) JSON output and option *-M id* for ndj2influx can be omitted.
 
-It's recommended to hide password from command line arguments, use
+It's recommended to hide password from command line arguments using
 *INFLUXDB_AUTH* env variable:
 
 ```shell
