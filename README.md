@@ -181,7 +181,7 @@ everything is almost the same, except Pulr is told to produce "short"
 ### Running with supervisor
 
 Both tools will crash as soon as any problem occurs. They're made this way,
-because in production "it's better crash and be restarted, than freeze".
+because in production "it's better to crash and be restarted, than freeze".
 
 To automatically restart the tools, let's use any supervisor, e.g.
 [Supervisord](http://supervisord.org/) (available in almost all Linux distros).
