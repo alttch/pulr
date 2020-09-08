@@ -199,7 +199,7 @@ Create a simple config and put it to */etc/supervisor/conf.d/pulr-device1.conf*
 
 ```ini
 [program:pulr-device1]
-command=sh -c "sleep 1 && pulr -F /path/to/pulr-config.yml -L -O ndjson | ndj2influx http://<dbhost>:8086 pulr @router1 -M id -v"
+command=sh -c "sleep 1 && pulr -F /path/to/pulr-config.yml -L -O ndjson | ndj2influx http://<dbhost>:8086 <DATABASE_NAME> @router1 -M id -v"
 environment=INFLUXDB_AUTH=<DB_USERNAME>:<PASSWORD>
 autorestart=true
 autostart=true
