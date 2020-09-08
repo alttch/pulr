@@ -1,8 +1,11 @@
 use argparse::{ArgumentParser, Store, StoreTrue};
 use chrono::DateTime;
 use colored::Colorize;
+use reqwest;
 use std::collections::HashMap;
 use std::io::{self, BufRead};
+use std::sync::mpsc;
+use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &String) -> i64 {
@@ -103,6 +106,9 @@ fn parse_metrics(
 
 fn main() {
     let mut basecol = String::new();
+    let mut url = String::new();
+    let mut database = String::new();
+    let mut auth = String::new();
     let mut verbose: bool = false;
     let mut tcol = "time".to_owned();
     let mut mcol = String::new();
@@ -111,6 +117,12 @@ fn main() {
     {
         let mut ap = ArgumentParser::new();
         ap.set_description(greeting);
+        ap.refer(&mut url)
+            .add_argument("URL", Store, "InfluxDB URL:Port (without leading slash)")
+            .required();
+        ap.refer(&mut database)
+            .add_argument("DB", Store, "InfluxDB database name")
+            .required();
         ap.refer(&mut basecol)
             .add_argument(
                 "BASE",
@@ -118,12 +130,16 @@ fn main() {
                 "base (hostname, etc.), use @name to set fixed value",
             )
             .required();
+        ap.refer(&mut auth)
+            .add_option(&["-U", "--user"], Store, "username:password, if required")
+            .metavar("NAME");
         ap.refer(&mut tcol)
             .add_option(
                 &["-T", "--time-col"],
                 Store,
-                "Time column, timestamp (seconds) or RFC3339",
-            )
+                "Time column, timestamp (seconds) or RFC3339, default: 'time'. \
+                use '@' to ignore JSON data and set current
+                time",)
             .metavar("NAME");
         ap.refer(&mut mcol)
             .add_option(
@@ -136,7 +152,7 @@ fn main() {
             .add_option(
                 &["-V", "--value-col"],
                 Store,
-                "Value column (default: value, not used for K=V), non-numeric values are skipped",
+                "Value column (default: 'value', not used for K=V), non-numeric values are skipped",
             )
             .metavar("NAME");
         ap.refer(&mut verbose).add_option(
@@ -146,11 +162,41 @@ fn main() {
         );
         ap.parse_args_or_exit();
     }
+    let (username, password) = match auth.is_empty() {
+        true => ("".to_owned(), "".to_owned()),
+        false => {
+            let mut n = auth.splitn(2, ":");
+            (n.next().unwrap().to_owned(), n.next().unwrap().to_owned())
+        }
+    };
     let base = match basecol.chars().next().unwrap() {
         '@' => &basecol[1..basecol.len()],
         _ => "",
     };
+    let influx_write_url = format!("{}/write?db={}", url, database);
     let stdin = io::stdin();
+    let (tx, rx) = mpsc::channel();
+    let processor = thread::spawn(move || {
+        let client = reqwest::blocking::Client::new();
+        loop {
+            let q: String = rx.recv().unwrap();
+            if q.is_empty() {
+                break;
+            }
+            let builder = match username.is_empty() {
+                true => client.post(&influx_write_url).body(q),
+                false => client
+                    .post(&influx_write_url)
+                    .body(q)
+                    .basic_auth(&username, Some(&password)),
+            };
+            let res = builder.send().expect("InfluxDB error");
+            let status = res.status();
+            if !status.is_success() {
+                panic!("DB response {}", status);
+            }
+        }
+    });
     loop {
         let mut buffer = String::new();
         match stdin.lock().read_line(&mut buffer) {
@@ -183,7 +229,10 @@ fn main() {
                     println!("{}{}{}", q.cyan().bold(), qm.blue().bold(), qts.green());
                 }
                 q = q + &qm + &qts;
+                tx.send(q).unwrap();
             }
         }
     }
+    tx.send("".to_owned()).unwrap();
+    processor.join().unwrap();
 }
