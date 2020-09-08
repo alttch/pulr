@@ -142,7 +142,11 @@ fn main() {
             )
             .required();
         ap.refer(&mut auth)
-            .add_option(&["-U", "--user"], Store, "username:password, if required")
+            .add_option(
+                &["-U", "--user"],
+                Store,
+                "username:password, if required. (better use INFLUXDB_AUTH env variable)",
+            )
             .metavar("NAME");
         ap.refer(&mut tcol)
             .add_option(
