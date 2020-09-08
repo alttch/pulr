@@ -81,7 +81,5 @@ pull:
     process:
       - offset: 0
         set-id: unit:tests/u1.status
-        # coils always return boolean bits, transform them to integers if
-        # necesseary
       - offset: 1
         set-id: unit:tests/u2.status
