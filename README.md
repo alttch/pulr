@@ -178,6 +178,15 @@ pulr -F /path/to/pulr-config.yml -L -O ndjson/short | \
 everything is almost the same, except Pulr is told to produce "short"
 (id=value) JSON output and option *-M id* for ndj2influx can be omitted.
 
+It's recommended to hide password from command line arguments on production
+using *INFLUXDB_AUTH* env variable:
+
+```shell
+pulr -F /path/to/pulr-config.yml -L -O ndjson | \
+     INFLUXDB_AUTH=<DB_USERNAME>:<PASSWORD> ndj2influx \
+        http://<INFLUXDB-IP-OR-HOST>:8086 <DATABASE_NAME> @device1 -M id -v
+```
+
 ### Running with supervisor
 
 Both tools will crash as soon as any problem occurs. They're made this way,
@@ -190,7 +199,8 @@ Create a simple config and put it to */etc/supervisor/conf.d/pulr-device1.conf*
 
 ```ini
 [program:pulr-device1]
-command=sh -c "sleep 1 && pulr -F /path/to/pulr-config.yml -L -O ndjson | ndj2influx http://<dbhost>:8086 pulr @router1 -U <DB_USERNAME>:<PASSWORD> -M id -v"
+command=sh -c "sleep 1 && pulr -F /path/to/pulr-config.yml -L -O ndjson | ndj2influx http://<dbhost>:8086 <DATABASE_NAME> @router1 -M id -v"
+environment=INFLUXDB_AUTH=<DB_USERNAME>:<PASSWORD>
 autorestart=true
 autostart=true
 priority=100
