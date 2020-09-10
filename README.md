@@ -41,6 +41,10 @@ pulr -F modbus.yml -L
 [Download a static binary from releases
 page](https://github.com/alttch/pulr/releases) and enjoy.
 
+[libplctag](https://github.com/libplctag/libplctag) is statically linked with
+Linux binaries. For Windows binaries, *plctag.dll* is included into the release
+zip archive.
+
 ## Building from source
 
 Ethernet/IP support requires

@@ -23,21 +23,26 @@ ver:
 	sed -i 's/^version = ".*/version = "${VERSION}"/g' Cargo.toml
 	sed -i 's/^const VERSION.*/const VERSION: \&str = "${VERSION}";/g' src/main.rs
 
-release: release_x86_64 release_armhf
+release: release_x86_64 release_armhf release_win64 check-binaries
 
 release_x86_64:
 	cp -vf build-x86_64.rs build.rs
 	cargo build --target x86_64-unknown-linux-musl --release
-	strip ./target/x86_64-unknown-linux-musl/release/pulr
 	cd ./tools/ndj2influx && cargo build --target x86_64-unknown-linux-musl --release
-	strip ./tools/ndj2influx/target/x86_64-unknown-linux-musl/release/ndj2influx
 
 release_armhf:
 	cp -vf build-armhf.rs build.rs
 	cargo build --target arm-unknown-linux-musleabihf --release
-	/usr/bin/arm-linux-gnueabihf-strip ./target/arm-unknown-linux-musleabihf/release/pulr
 	cd ./tools/ndj2influx && cross build --target arm-unknown-linux-musleabihf --release
 	/usr/bin/arm-linux-gnueabihf-strip ./tools/ndj2influx/target/arm-unknown-linux-musleabihf/release/ndj2influx
+
+release_win64:
+	cp -vf build-win64.rs build.rs
+	cargo build --target x86_64-pc-windows-gnu --release
+	cd ./tools/ndj2influx && cargo build --target x86_64-pc-windows-gnu --release
+
+check-binaries:
+	./.dev/check-binaries
 
 release-upload: release-upload-x86_64 release-upload-arm
 
@@ -58,3 +63,14 @@ release-upload-arm:
 	gzip /tmp/pulr.linux-arm-musleabihf.tar
 	./.dev/release-upload.sh pulr.linux-arm-musleabihf.tar.gz
 	rm /tmp/pulr.linux-arm-musleabihf.tar.gz
+
+release-upload-win64:
+	rm -f /tmp/pulr.windows-x86_64.zip
+	cd ./target/x86_64-pc-windows-gnu/release && \
+	 	zip /tmp/pulr.windows-x86_64.zip pulr.exe
+	cd ./tools/ndj2influx/target/x86_64-pc-windows-gnu/release && \
+	 	zip /tmp/pulr.windows-x86_64.zip ndj2influx.exe
+	cd /opt/libplctag/win_x64 && \
+		zip /tmp/pulr.windows-x86_64.zip plctag.dll
+	./.dev/release-upload.sh pulr.windows-x86_64.zip
+	rm /tmp/pulr.windows-x86_64.zip
