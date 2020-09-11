@@ -25,6 +25,9 @@ ver:
 
 release: release_x86_64 release_armhf release_win64 check-binaries
 
+prepare-targets:
+	./.dev/prepare-targets.sh
+
 release_x86_64:
 	cp -vf build-x86_64.rs build.rs
 	cargo build --target x86_64-unknown-linux-musl --release
