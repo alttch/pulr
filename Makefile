@@ -47,7 +47,7 @@ release_win64:
 check-binaries:
 	./.dev/check-binaries.sh
 
-release-upload: release-upload-x86_64 release-upload-arm
+release-upload: release-upload-x86_64 release-upload-arm release-upload-win64
 
 release-upload-x86_64:
 	cd ./target/x86_64-unknown-linux-musl/release && \
