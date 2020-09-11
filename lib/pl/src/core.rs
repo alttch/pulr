@@ -14,6 +14,11 @@ use datatypes::{Event, OutputType};
 use tools::oprint;
 use transform;
 
+pub fn init() {
+    #[cfg(windows)]
+    colored::control::set_override(false);
+}
+
 pub fn print_debug(s: &String) {
     oprint(s.cyan().dimmed().to_string());
 }

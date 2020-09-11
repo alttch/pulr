@@ -83,9 +83,6 @@ struct Config {
 }
 
 fn main() {
-    #[cfg(windows)]
-    colored::control::set_override(false);
-
     let mut in_loop = false;
     let mut verbose = false;
     let mut cfgfile = String::new();
@@ -110,6 +107,7 @@ fn main() {
             .metavar("TYPE");
         ap.parse_args_or_exit();
     }
+    pl::init();
     let cfg = fs::read_to_string(cfgfile).expect("Config not found!");
     let config: Config = serde_yaml::from_str(&cfg).unwrap();
     if config.version < CFG_VERSION_MIN || config.version > CFG_VERSION_MAX {
