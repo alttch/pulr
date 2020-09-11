@@ -45,7 +45,7 @@ release_win64:
 	cd ./tools/ndj2influx && cargo build --target x86_64-pc-windows-gnu --release
 
 check-binaries:
-	./.dev/check-binaries
+	./.dev/check-binaries.sh
 
 release-upload: release-upload-x86_64 release-upload-arm
 
