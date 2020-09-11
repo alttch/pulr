@@ -20,7 +20,7 @@ mod ppenip;
 mod ppsnmp;
 
 const HOMEPAGE: &str = "https://github.com/alttch/pulr";
-const VERSION: &str = "1.0.1";
+const VERSION: &str = "1.0.2";
 
 fn get_default_timeout() -> f32 {
     return 5.0;
@@ -83,6 +83,9 @@ struct Config {
 }
 
 fn main() {
+    #[cfg(windows)]
+    colored::control::set_override(false);
+
     let mut in_loop = false;
     let mut verbose = false;
     let mut cfgfile = String::new();
@@ -120,7 +123,6 @@ fn main() {
     let timeout = Duration::from_millis((config.timeout * 1000 as f32) as u64);
     let beacon_interval = Duration::from_micros((config.beacon * 1_000_000.0) as u64);
     let interval = Duration::from_micros((1.0 / config.freq as f64 * 1_000_000.0) as u64);
-
     {
         let core = pl::Core::new(otp.0, otp.1, config.time_format);
         let mut beacon = pl::Beacon::new(otp.0, beacon_interval);

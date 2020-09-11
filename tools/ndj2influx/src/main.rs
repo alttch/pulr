@@ -10,7 +10,7 @@ use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use ureq;
 
-const VERSION: &str = "0.0.2";
+const VERSION: &str = "0.0.3";
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &String) -> i64 {
     return match tcol.as_str() {
@@ -109,6 +109,9 @@ fn parse_metrics(
 }
 
 fn main() {
+    #[cfg(windows)]
+    colored::control::set_override(false);
+
     let mut basecol = String::new();
     let mut url = String::new();
     let mut database = String::new();
