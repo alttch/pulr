@@ -23,7 +23,7 @@ ver:
 	sed -i 's/^version = ".*/version = "${VERSION}"/g' Cargo.toml
 	sed -i 's/^const VERSION.*/const VERSION: \&str = "${VERSION}";/g' src/main.rs
 
-release: release_x86_64 release_armhf release_win64 check-binaries
+release: prepare-targets release_x86_64 release_armhf release_win64 check-binaries
 
 prepare-targets:
 	./.dev/prepare-targets.sh
