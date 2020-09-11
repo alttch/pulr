@@ -67,7 +67,7 @@ struct Config {
     timeout: f32,
     #[serde(default = "get_default_beacon")]
     beacon: f32,
-    freq: u16,
+    freq: f64,
     #[serde(
         default = "pl::datatypes::get_default_output",
         deserialize_with = "de_output"
