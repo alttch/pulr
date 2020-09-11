@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
 CHECK_FILES=(
   "target/x86_64-unknown-linux-musl/release/pulr"
@@ -12,12 +12,12 @@ CHECK_FILES=(
 for f in ${CHECK_FILES[@]}; do
   echo -n "$f "
   if [[ $f == *"target/arm-"* ]]; then
-    file $f | grep "statically linked, stripped$" > /dev/null
+    file $f | grep "statically linked, stripped$" > /dev/null || exit 1
   elif [[ $f == *"target/x86_64-pc-windows-"* ]]; then
-    file $f | grep "(stripped to external PDB)" > /dev/null
+    file $f | grep "(stripped to external PDB)" > /dev/null || exit 1
   else
-    ldd $f | grep "statically linked" > /dev/null
-    file $f | grep ", stripped$" > /dev/null
+    ldd $f | grep "statically linked" > /dev/null || exit 1
+    file $f | grep ", stripped$" > /dev/null || exit 1
   fi
   echo "OK"
 done
