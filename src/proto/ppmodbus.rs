@@ -271,6 +271,42 @@ pub fn run(
                     );
                     core.output(&event);
                 }
+                GenDataType::Uint64 => {
+                    let v1 = *v.get(d.offset.offset as usize).expect(ERROR_OOB) as u64;
+                    let v2 = *v.get((d.offset.offset + 1) as usize).expect(ERROR_OOB) as u64;
+                    let v3 = *v.get((d.offset.offset + 2) as usize).expect(ERROR_OOB) as u64;
+                    let v4 = *v.get((d.offset.offset + 3) as usize).expect(ERROR_OOB) as u64;
+                    let value = u64::from_be_bytes([
+                        (v1 >> 8) as u8,
+                        v1 as u8,
+                        (v2 >> 8) as u8,
+                        v2 as u8,
+                        (v3 >> 8) as u8,
+                        v3 as u8,
+                        (v4 >> 8) as u8,
+                        v4 as u8,
+                    ]);
+                    let event = core.create_event(&d.set_id, value, &d.transform, &t);
+                    core.output(&event);
+                }
+                GenDataType::Int64 => {
+                    let v1 = *v.get(d.offset.offset as usize).expect(ERROR_OOB) as u64;
+                    let v2 = *v.get((d.offset.offset + 1) as usize).expect(ERROR_OOB) as u64;
+                    let v3 = *v.get((d.offset.offset + 2) as usize).expect(ERROR_OOB) as u64;
+                    let v4 = *v.get((d.offset.offset + 3) as usize).expect(ERROR_OOB) as u64;
+                    let value = u64::from_be_bytes([
+                        (v1 >> 8) as u8,
+                        v1 as u8,
+                        (v2 >> 8) as u8,
+                        v2 as u8,
+                        (v3 >> 8) as u8,
+                        v3 as u8,
+                        (v4 >> 8) as u8,
+                        v4 as u8,
+                    ]);
+                    let event = core.create_event(&d.set_id, value as i64, &d.transform, &t);
+                    core.output(&event);
+                }
                 GenDataType::Real32 => {
                     let v1 = match v.get(d.offset.offset as usize) {
                         Some(z) => z,

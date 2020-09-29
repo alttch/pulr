@@ -59,8 +59,10 @@ pull:
         # real, real32 - IEEE 754 32-bit float
         # uint16, word - unsigned 16-bit integer
         # sint16, int16 - signed 16-bit integer
-        # uint32, dword - unsigned 32-bit integer
-        # sint32, int32 - signed 32-bit integer
+        # uint32, dword - unsigned 32-bit integer (big-endian)
+        # sint32, int32 - signed 32-bit integer (big-endian)
+        # uint64, qword - unsigned 64-bit integer (big-endian)
+        # sint64, int64 - signed 64-bit integer (big-endian)
         type: real
         set-id:  unit:axon/aout.value
         transform:
