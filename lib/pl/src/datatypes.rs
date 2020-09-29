@@ -296,7 +296,7 @@ impl GenDataTypeParse for String {
             "uint32" | "dword" => GenDataType::Uint32,
             "int32" | "sint32" => GenDataType::Int32,
             "uint64" | "qword" => GenDataType::Uint64,
-            "int64" | "sint64" => GenDataType::Uint64,
+            "int64" | "sint64" => GenDataType::Int64,
             "real32" | "real" | "float32" | "float" => GenDataType::Real32,
             "real64" | "float64" => GenDataType::Real64,
             _ => unimplemented!("Unsupported data type: {}", self),
