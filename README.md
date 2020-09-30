@@ -95,6 +95,10 @@ Currently supported:
 * SNMP (v2)
 * Ethernet/IP (Allen Bradley-compatible)
 
+Need to pull data from Modbus RTU? Use our free [Modbus gateway
+server](https://github.com/alttch/modbusgw).
+
+
 ## Data transformers
 
 * **calc\_speed** - calculate value growing speed, useful for SNMP interface
