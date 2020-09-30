@@ -106,7 +106,7 @@ impl ModbusDataAsU16 for modbus::tcp::Transport {
         addr: u16,
         count: u16,
     ) -> Result<Vec<u16>, modbus::Error> {
-        return match self.read_coils(addr, count) {
+        return match self.read_discrete_inputs(addr, count) {
             Ok(v) => {
                 let mut r = Vec::new();
                 for c in v {
