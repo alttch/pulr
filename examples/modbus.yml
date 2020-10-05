@@ -17,12 +17,14 @@ proto:
   name: modbus/tcp
   # Modbus host/port
   source: 10.90.1.138:502
-  # unit ID
+  # default unit ID
   unit: 0x01
 pull:
   # get 2 holding registers (h = holding, i = input, d = discrete, c = coils)
   - reg: h0
     count: 2
+    # override default unit ID if required
+    unit: 0x01
     # process the data
     process:
       # offset X/Y means get Yth bit of Xth word
