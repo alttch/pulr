@@ -91,7 +91,7 @@ longer, but kept in "legacy0" branch.
 
 Currently supported:
 
-* Modbus (TCP only)
+* Modbus (TCP/UDP only)
 * SNMP (v2)
 * Ethernet/IP (Allen Bradley-compatible)
 
