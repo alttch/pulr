@@ -173,7 +173,7 @@ pub fn output_eva_datapuller<T: std::fmt::Display>(event: &Event<T>) {
             event.value
         ));
     } else {
-        oprint(format!("{} u {}", event.id, event.value));
+        oprint(format!("{} u None {}", event.id, event.value));
     }
 }
 
