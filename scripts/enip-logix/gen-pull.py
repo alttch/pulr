@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-
 """
 Generates Pulr "pull" config section from JSON, created with fetch-tags.py
 """
 
 import sys
 import argparse
+
+from textwrap import dedent
 
 try:
     import rapidjson as json
@@ -20,6 +21,27 @@ ap = argparse.ArgumentParser()
 
 ap.add_argument('tagfile', metavar='FILE', help='JSON tags file')
 ap.add_argument('tag', metavar='TAG', help='Tag to parse')
+
+ap.add_argument('-i',
+                '--source',
+                metavar='ADDR',
+                help='PLC IP[:port] (full config is generated is defined')
+
+ap.add_argument('-f',
+                '--freq',
+                metavar='HERZ',
+                help='Pull frequency',
+                default=1,
+                type=int)
+
+ap.add_argument('--path', metavar='PATH', help='PLC path', default="1,0")
+ap.add_argument('--cpu', metavar='CPU', help='CPU', default="LGX")
+
+ap.add_argument('--timeout',
+                metavar='SEC',
+                help='PLC TIMEOUT',
+                type=float,
+                default=2)
 
 a = ap.parse_args()
 
@@ -99,26 +121,45 @@ def gen_process(data, offset, tag_name, result=[]):
     return result
 
 
-data = find_tag(a.tag, tags)
-if data['tag_type'] == 'struct':
-    pulls.append({
-        '1tag': a.tag,
-        'process': gen_process(data['data_type']['internal_tags'], 0, a.tag)
-    })
-else:
-    tags_count = 1
-    pulls.append({
-        '1tag':
-            a.tag,
-        'process': [{
-            'offset': 0,
-            'set-id': tag,
-            'type': DATA_TYPES[data['data_type']]
-        }]
-    })
+for TAG in a.tag.split(','):
+    data = find_tag(TAG, tags)
+    if data is None:
+        raise ValueError(f'Tag not found: {TAG}')
+    if data['tag_type'] == 'struct':
+        pulls.append({
+            '1tag': TAG,
+            'process': gen_process(data['data_type']['internal_tags'], 0, TAG)
+        })
+    else:
+        tags_count += 1
+        pulls.append({
+            '1tag':
+                TAG,
+            'process': [{
+                'offset': 0,
+                'set-id': TAG,
+                'type': DATA_TYPES[data['data_type']]
+            }]
+        })
+
+from collections import OrderedDict
+
+if a.source:
+    print(dedent(
+        f"""
+        version: 2
+        timeout: {a.timeout}
+        freq: {a.freq}
+        proto:
+          name: enip/ab_eip
+          source: {a.source}
+          path: {a.path}
+          cpu: {a.cpu}
+        """).lstrip())
+
 
 print(
     yaml.dump(dict(pull=pulls),
               default_flow_style=False).replace('\n- 1tag', '\n- tag'))
 
-print(f'{tags_count} tags generated', file=sys.stderr)
+print(f'{tags_count} tag(s) generated', file=sys.stderr)
