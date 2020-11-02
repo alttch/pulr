@@ -19,8 +19,12 @@ pulls = []
 
 ap = argparse.ArgumentParser()
 
-ap.add_argument('tagfile', metavar='FILE', help='JSON tags file')
-ap.add_argument('tag', metavar='TAG', help='Tag to parse')
+ap.add_argument('tag', metavar='TAG', help='Tags to parse (comma separated)')
+
+ap.add_argument('-F',
+                '--tagfile',
+                metavar='FILE',
+                help='JSON tags file (default: stdin)')
 
 ap.add_argument('-i',
                 '--source',
@@ -82,8 +86,11 @@ def find_tag(tag, data):
                                               t['data_type']['internal_tags'])
 
 
-with open(a.tagfile) as fh:
-    tags = json.loads(fh.read())
+if a.tagfile:
+    with open(a.tagfile) as fh:
+        tags = json.loads(fh.read())
+else:
+    tags = json.loads(sys.stdin.read())
 
 DATA_TYPES = {
     'DINT': 'uint32',
@@ -145,8 +152,8 @@ for TAG in a.tag.split(','):
 from collections import OrderedDict
 
 if a.source:
-    print(dedent(
-        f"""
+    print(
+        dedent(f"""
         version: 2
         timeout: {a.timeout}
         freq: {a.freq}
@@ -156,7 +163,6 @@ if a.source:
           path: {a.path}
           cpu: {a.cpu}
         """).lstrip())
-
 
 print(
     yaml.dump(dict(pull=pulls),
