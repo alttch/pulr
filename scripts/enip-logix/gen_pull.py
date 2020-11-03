@@ -27,7 +27,7 @@ def generate(tag_list,
              config=None,
              id_prefix='',
              id_suffix='',
-             output_stats=True,
+             print_stats=False,
              print_config=False):
 
     def find_tag_in_struct(tag, data):
@@ -155,7 +155,7 @@ def generate(tag_list,
     if print_config:
         print(CFG)
 
-    if output_stats:
+    if print_stats:
         print(f'{tags_count} tag(s) generated', file=sys.stderr)
 
     return CFG
@@ -223,4 +223,5 @@ if __name__ == '__main__':
              config=config,
              id_prefix=a.id_prefix,
              id_suffix=a.id_suffix,
+             print_stats=True,
              print_config=True)
