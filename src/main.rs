@@ -1,8 +1,8 @@
 // TODO: move "if verbose" to macro
 use argparse::{ArgumentParser, Store, StoreTrue};
 use serde::{Deserialize, Deserializer};
-use std::fs;
 use std::time::Duration;
+use std::{fs, io, io::Read};
 
 use pl;
 
@@ -20,7 +20,7 @@ mod ppenip;
 mod ppsnmp;
 
 const HOMEPAGE: &str = "https://github.com/alttch/pulr";
-const VERSION: &str = "1.0.6";
+const VERSION: &str = "1.0.7";
 
 fn get_default_timeout() -> f32 {
     return 5.0;
@@ -99,7 +99,11 @@ fn main() {
             "Verbose output (debug)",
         );
         ap.refer(&mut cfgfile)
-            .add_option(&["-F", "--config"], Store, "Configuration file")
+            .add_option(
+                &["-F", "--config"],
+                Store,
+                "Configuration file ('-' for stdin)",
+            )
             .metavar("CONFIG")
             .required();
         ap.refer(&mut output_type)
@@ -108,7 +112,14 @@ fn main() {
         ap.parse_args_or_exit();
     }
     pl::init();
-    let cfg = fs::read_to_string(cfgfile).expect("Config not found!");
+    let cfg = match cfgfile.as_str() {
+        "-" => {
+            let mut buf = String::new();
+            io::stdin().read_to_string(&mut buf).unwrap();
+            buf
+        }
+        _ => fs::read_to_string(cfgfile).expect("Config not found!"),
+    };
     let config: Config = serde_yaml::from_str(&cfg).unwrap();
     if config.version < CFG_VERSION_MIN || config.version > CFG_VERSION_MAX {
         panic!("configuration version {} is unsupported", config.version);
