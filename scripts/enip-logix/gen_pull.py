@@ -27,7 +27,8 @@ def generate(tag_list,
              config=None,
              id_prefix='',
              id_suffix='',
-             output_stats=True):
+             output_stats=True,
+             print_config=False):
 
     def find_tag_in_struct(tag, data):
         if '.' in tag:
@@ -134,9 +135,10 @@ def generate(tag_list,
                 }]
             })
 
+    CFG = ''
+
     if config:
-        print(
-            dedent(f"""
+        CFG += dedent(f"""
             version: 2
             timeout: {config.get("timeout", DEFAULT_TIMEOUT)}
             freq: {config.get("freq", DEFAULT_FREQ)}
@@ -145,14 +147,18 @@ def generate(tag_list,
               source: {config["source"]}
               path: {config.get("path", DEFAULT_PATH)}
               cpu: {config.get("cpu", DEFAULT_CPU)}
-            """).lstrip())
+            """).lstrip()
 
-    print(
-        yaml.dump(dict(pull=pulls),
-                  default_flow_style=False).replace('\n- 1tag', '\n- tag'))
+    CFG += yaml.dump(dict(pull=pulls),
+                  default_flow_style=False).replace('\n- 1tag', '\n- tag')
+
+    if print_config:
+        print(CFG)
 
     if output_stats:
         print(f'{tags_count} tag(s) generated', file=sys.stderr)
+
+    return CFG
 
 
 if __name__ == '__main__':
@@ -216,4 +222,5 @@ if __name__ == '__main__':
              tag_list=a.tag.split(','),
              config=config,
              id_prefix=a.id_prefix,
-             id_suffix=a.id_suffix)
+             id_suffix=a.id_suffix,
+             print_config=True)
