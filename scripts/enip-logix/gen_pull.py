@@ -25,6 +25,8 @@ def generate(tag_list,
              tag_file=None,
              tag_data=None,
              config=None,
+             id_prefix='',
+             id_suffix='',
              output_stats=True):
 
     def find_tag_in_struct(tag, data):
@@ -105,7 +107,7 @@ def generate(tag_list,
                     'type':
                         DATA_TYPES[d['data_type']],
                     'set-id':
-                        tag_name + '.' + tag
+                        f'{id_prefix}{tag_name}.{tag}{id_suffix}'
                 })
         return result
 
@@ -127,7 +129,7 @@ def generate(tag_list,
                     TAG,
                 'process': [{
                     'offset': 0,
-                    'set-id': TAG,
+                    'set-id': f'{id_prefix}{TAG}{id_suffix}',
                     'type': DATA_TYPES[data['data_type']]
                 }]
             })
@@ -189,6 +191,16 @@ if __name__ == '__main__':
                     type=float,
                     default=DEFAULT_TIMEOUT)
 
+    ap.add_argument('--id-prefix',
+                    metavar='VALUE',
+                    help='ID prefix',
+                    default='')
+
+    ap.add_argument('--id-suffix',
+                    metavar='VALUE',
+                    help='ID suffix',
+                    default='')
+
     a = ap.parse_args()
 
     if a.source:
@@ -200,4 +212,8 @@ if __name__ == '__main__':
     else:
         config = None
 
-    generate(tag_file=a.tag_file, tag_list=a.tag.split(','), config=config)
+    generate(tag_file=a.tag_file,
+             tag_list=a.tag.split(','),
+             config=config,
+             id_prefix=a.id_prefix,
+             id_suffix=a.id_suffix)
