@@ -29,18 +29,15 @@ prepare-targets:
 	./.dev/prepare-targets.sh
 
 release_x86_64:
-	cp -vf build-x86_64.rs build.rs
 	cargo build --target x86_64-unknown-linux-musl --release
 	cd ./tools/ndj2influx && cargo build --target x86_64-unknown-linux-musl --release
 
 release_armhf:
-	cp -vf build-armhf.rs build.rs
 	cargo build --target arm-unknown-linux-musleabihf --release
 	cd ./tools/ndj2influx && cross build --target arm-unknown-linux-musleabihf --release
 	/usr/bin/arm-linux-gnueabihf-strip ./tools/ndj2influx/target/arm-unknown-linux-musleabihf/release/ndj2influx
 
 release_win64:
-	cp -vf build-win64.rs build.rs
 	cargo build --target x86_64-pc-windows-gnu --release
 	cd ./tools/ndj2influx && cargo build --target x86_64-pc-windows-gnu --release
 
