@@ -59,7 +59,7 @@ sudo make install
 sudo ldconfig
 ```
 
-After, either use Makefile targets or run cargo manually.
+After, either use Makefile targets or run cargo manually:
 
 ```shell
 cargo build --release # or custom options
