@@ -62,7 +62,6 @@ sudo ldconfig
 After, either use Makefile targets or run cargo manually.
 
 ```shell
-cp -vf build-x86_64.rs build.rs
 cargo build --release # or custom options
 ```
 
