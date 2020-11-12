@@ -74,12 +74,70 @@ def generate(tag_list,
         tags = tag_data
 
     DATA_TYPES = {
-        'DINT': 'uint32',
-        'DWORD': 'uint32',
-        'REAL': 'real32',
         'BOOL': 'uint8',
-        'INT': 'sint32'
+        'BYTE': 'byte',
+        'WORD': 'word',
+        'DWORD': 'dword',
+        'LWORD': 'qword',
+        'SINT': 'sint8',
+        'USINT': 'uint8',
+        'INT': 'sint16',
+        'UINT': 'uint16',
+        'DINT': 'sint32',
+        'UDINT': 'uint32',
+        'LINT': 'sint64',
+        'ULINT': 'uint64',
+        'REAL': 'real32',
+        'LREAL': 'real64'
     }
+
+    DATA_TYPE_SIZE = {
+        'BOOL': 1,
+        'BYTE': 1,
+        'WORD': 2,
+        'DWORD': 4,
+        'LWORD': 8,
+        'SINT': 1,
+        'USINT': 1,
+        'INT': 2,
+        'UINT': 2,
+        'DINT': 4,
+        'UDINT': 4,
+        'LINT': 8,
+        'ULINT': 8,
+        'REAL': 4,
+        'LREAL': 8
+    }
+
+    def gen_offset(o1, o2, int_if_possible=False):
+        if o1:
+            o = f'{o1}+{o2}'
+        else:
+            o = o2 if int_if_possible else f'{o2}'
+        return o
+
+    def add_tag_info(tag_name, tag_data, coll, offset=0, base_offset=0):
+
+        arr = tag_data.get('array', 0)
+        if arr:
+            for aofs in range(0, arr):
+                coll.append({
+                    'offset':
+                        gen_offset(base_offset,
+                                   offset +
+                                   aofs * DATA_TYPE_SIZE[tag_data['data_type']],
+                                   int_if_possible=True),
+                    'set-id':
+                        f'{id_prefix}{tag_name}{id_suffix}[{aofs}]',
+                    'type':
+                        DATA_TYPES[tag_data['data_type']]
+                })
+        else:
+            coll.append({
+                'offset': gen_offset(base_offset, offset, int_if_possible=True),
+                'set-id': f'{id_prefix}{tag_name}{id_suffix}',
+                'type': DATA_TYPES[tag_data['data_type']]
+            })
 
     tags_count = 0
 
@@ -88,13 +146,6 @@ def generate(tag_list,
     def gen_process(data, offset, tag_name, result=[]):
         nonlocal tags_count
 
-        def gen_offset(o1, o2, int_if_possible=False):
-            if o1:
-                o = f'{o1}+{o2}'
-            else:
-                o = o2 if int_if_possible else f'{o2}'
-            return o
-
         for tag, d in data.items():
             if d['tag_type'] == 'struct':
                 gen_process(d['data_type']['internal_tags'],
@@ -102,14 +153,11 @@ def generate(tag_list,
                             tag_name + '.' + tag, result)
             else:
                 tags_count += 1
-                result.append({
-                    'offset':
-                        gen_offset(offset, d['offset'], int_if_possible=True),
-                    'type':
-                        DATA_TYPES[d['data_type']],
-                    'set-id':
-                        f'{id_prefix}{tag_name}.{tag}{id_suffix}'
-                })
+                add_tag_info(f'{tag_name}.{tag}',
+                             d,
+                             result,
+                             offset=d['offset'],
+                             base_offset=offset)
         return result
 
     for TAG in tag_list:
@@ -125,15 +173,10 @@ def generate(tag_list,
             })
         else:
             tags_count += 1
-            pulls.append({
-                '1tag':
-                    TAG,
-                'process': [{
-                    'offset': 0,
-                    'set-id': f'{id_prefix}{TAG}{id_suffix}',
-                    'type': DATA_TYPES[data['data_type']]
-                }]
-            })
+
+            result = []
+            add_tag_info(TAG, data, result)
+            pulls.append({'1tag': TAG, 'process': result})
 
     CFG = ''
 
@@ -150,7 +193,7 @@ def generate(tag_list,
             """).lstrip()
 
     CFG += yaml.dump(dict(pull=pulls),
-                  default_flow_style=False).replace('\n- 1tag', '\n- tag')
+                     default_flow_style=False).replace('\n- 1tag', '\n- tag')
 
     if print_config:
         print(CFG)
