@@ -24,6 +24,7 @@ DEFAULT_TIMEOUT = 2
 def generate(tag_list,
              tag_file=None,
              tag_data=None,
+             exclude=None,
              config=None,
              id_prefix='',
              id_suffix='',
@@ -118,9 +119,24 @@ def generate(tag_list,
 
     def add_tag_info(tag_name, tag_data, coll, offset=0, base_offset=0):
 
+        nonlocal tags_count
+
+        if exclude:
+            for x in exclude:
+                if x.startswith('*'):
+                    if tag_name.endswith(x[1:]):
+                        return
+                elif x.endswith('*'):
+                    if tag_name.startswith(x[:-1]):
+                        return
+                else:
+                    if tag_name == x:
+                        return
+
         arr = tag_data.get('array', 0)
         if arr:
             for aofs in range(0, arr):
+                tags_count += 1
                 coll.append({
                     'offset':
                         gen_offset(base_offset,
@@ -133,6 +149,7 @@ def generate(tag_list,
                         DATA_TYPES[tag_data['data_type']]
                 })
         else:
+            tags_count += 1
             coll.append({
                 'offset': gen_offset(base_offset, offset, int_if_possible=True),
                 'set-id': f'{id_prefix}{tag_name}{id_suffix}',
@@ -144,15 +161,23 @@ def generate(tag_list,
     pulls = []
 
     def gen_process(data, offset, tag_name, result=[]):
-        nonlocal tags_count
 
         for tag, d in data.items():
             if d['tag_type'] == 'struct':
-                gen_process(d['data_type']['internal_tags'],
-                            gen_offset(offset, d['offset']),
-                            tag_name + '.' + tag, result)
+                if d['array'] == 0:
+                    gen_process(d['data_type']['internal_tags'],
+                                gen_offset(offset, d['offset']),
+                                tag_name + '.' + tag, result)
+                else:
+                    for aofs in range(0, d['array']):
+                        gen_process(
+                            d['data_type']['internal_tags'],
+                            gen_offset(
+                                offset + aofs *
+                                d['data_type']['template']['structure_size'],
+                                d['offset']), f'{tag_name}.{tag}[{aofs}]',
+                            result)
             else:
-                tags_count += 1
                 add_tag_info(f'{tag_name}.{tag}',
                              d,
                              result,
@@ -172,8 +197,6 @@ def generate(tag_list,
                     gen_process(data['data_type']['internal_tags'], 0, TAG, [])
             })
         else:
-            tags_count += 1
-
             result = []
             add_tag_info(TAG, data, result)
             pulls.append({'1tag': TAG, 'process': result})
@@ -221,6 +244,12 @@ if __name__ == '__main__':
                     metavar='ADDR',
                     help='PLC IP[:port] (full config is generated is defined')
 
+    ap.add_argument(
+        '-x',
+        '--exclude',
+        metavar='TAGS',
+        help='Tags to exclude (comma separated, star masks possible)')
+
     ap.add_argument('-f',
                     '--freq',
                     metavar='HERZ',
@@ -264,6 +293,7 @@ if __name__ == '__main__':
     generate(tag_file=a.tag_file,
              tag_list=a.tag.split(','),
              config=config,
+             exclude=a.exclude.split(',') if a.exclude else None,
              id_prefix=a.id_prefix,
              id_suffix=a.id_suffix,
              print_stats=True,
