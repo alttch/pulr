@@ -33,7 +33,7 @@ pull:
         set-id: myTag1
         # valid tag types are:
         #
-        # real, real32, real64 uint8, int8, sint8, byte, uint16, word, uint32,
+        # real, real32, real64, uint8, int8, sint8, byte, uint16, word, uint32,
         # dword, sint16, int16, sint32, int32, int64, sint64, uint64, qword
         type: int32
         transform:
