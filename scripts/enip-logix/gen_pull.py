@@ -160,6 +160,18 @@ def generate(tag_list,
 
     pulls = []
 
+    def parse_offset(offset):
+        if isinstance(offset, int):
+            return offset
+        elif '+' in offset:
+            o = offset.split('+')
+            result = 0
+            for i in o:
+                o += int(i)
+            return result
+        else:
+            return int(offset)
+
     def gen_process(data, offset, tag_name, result=[]):
 
         for tag, d in data.items():
@@ -173,7 +185,7 @@ def generate(tag_list,
                         gen_process(
                             d['data_type']['internal_tags'],
                             gen_offset(
-                                offset + aofs *
+                                parse_offset(offset) + aofs *
                                 d['data_type']['template']['structure_size'],
                                 d['offset']), f'{tag_name}.{tag}[{aofs}]',
                             result)
