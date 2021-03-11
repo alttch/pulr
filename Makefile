@@ -70,7 +70,7 @@ release-upload-win64:
 	 	zip /tmp/pulr.windows-x86_64.zip pulr.exe
 	cd ./tools/ndj2influx/target/x86_64-pc-windows-gnu/release && \
 	 	zip /tmp/pulr.windows-x86_64.zip ndj2influx.exe
-	cd /opt/libplctag/win_x64 && \
+	cd /opt/libplctag/windows-x86_64 && \
 		zip /tmp/pulr.windows-x86_64.zip plctag.dll
 	./.dev/release-upload.sh pulr.windows-x86_64.zip
 	rm /tmp/pulr.windows-x86_64.zip
