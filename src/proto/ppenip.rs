@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::ffi;
 use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use pl::datatypes;
 use pl::datatypes::{GenDataType, GenDataTypeParse, ParseData};
@@ -211,9 +211,13 @@ pub fn run(
                     if tag_id < 0 {
                         panic!("{} error {}", p.path, tag_id);
                     }
+                    let wait_to = SystemTime::now() + timeout;
                     loop {
                         let rc = plctag::plc_tag_status(tag_id);
                         if rc == plctag::PLCTAG_STATUS_PENDING {
+                            if SystemTime::now() > wait_to {
+                                panic!("{} create timeout", p.path);
+                            }
                             thread::sleep(plc_sleep_step);
                             continue;
                         } else if rc != plctag::PLCTAG_STATUS_OK {
