@@ -167,10 +167,10 @@ pub fn run(
         }
         let bulk: bool = p.max_repeat > 1 || oids.len() > 1;
         pulls.push(SNMPPullData {
-            oids: oids,
+            oids,
             non_repeat: p.non_repeat,
             max_repeat: p.max_repeat,
-            bulk: bulk,
+            bulk,
         });
         dp_list.push(process_data_vec);
     }

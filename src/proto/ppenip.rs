@@ -111,9 +111,9 @@ pub fn run(
             let offset = prc.offset.safe_parse_u32();
             let tp = prc.r#type.parse_data_type();
             process_data_vec.push(EnIpDataProcessInfo {
-                offset: offset,
+                offset,
                 set_id: prc.set_id,
-                tp: tp,
+                tp,
                 transform: prc.transform,
             });
         }
@@ -128,10 +128,7 @@ pub fn run(
             p.tag
         );
         let path_hash = datatypes::calculate_hash(&path);
-        pulls.push(EnIpPullData {
-            path: path,
-            path_hash: path_hash,
-        });
+        pulls.push(EnIpPullData { path, path_hash });
         dp_list.push(process_data_vec);
     }
     // prepare & launch processor

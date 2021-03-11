@@ -436,9 +436,9 @@ pub fn run(
                 None => prc.r#type.parse_data_type(),
             };
             process_data_vec.push(ModbusDataProcessInfo {
-                offset: offset,
+                offset,
                 set_id: prc.set_id,
-                tp: tp,
+                tp,
                 transform: prc.transform,
             });
         }
@@ -453,7 +453,7 @@ pub fn run(
             tp: register_type,
             addr: addr as u16,
             count: p.count,
-            unit: unit,
+            unit,
         });
         dp_list.push(process_data_vec);
     }
