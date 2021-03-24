@@ -6,6 +6,8 @@ timeout: 2
 beacon: 2
 # pull data from source 2 times per second
 freq: 2
+# re-send all events every N seconds even if no values modified
+#resend: 10
 # output time, valid format values are: rfc3339, raw / timestamp
 time-format: rfc3339
 # protocol

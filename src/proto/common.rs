@@ -1,10 +1,17 @@
 #[macro_export]
 macro_rules! define_task_result {
     ($t:ty) => {
+        enum TaskCmd {
+            Process,
+            #[allow(dead_code)]
+            ClearCache,
+            Terminate,
+        }
         struct TaskResult {
             data: Option<$t>,
             work_id: Option<usize>,
             t: datatypes::EventTime,
+            cmd: TaskCmd,
         }
     };
 }
@@ -18,9 +25,25 @@ macro_rules! terminate_processor {
                 data: None,
                 work_id: None,
                 t: pl::datatypes::EventTime::new(TimeFormat::Omit),
+                cmd: TaskCmd::Terminate,
             })
             .unwrap();
         $processor.join().unwrap();
+    };
+}
+
+#[macro_export]
+macro_rules! clear_processor_cache {
+    ($processor:path, $channel:path) => {
+        use pl::datatypes::TimeFormat;
+        $channel
+            .send(TaskResult {
+                data: None,
+                work_id: None,
+                t: pl::datatypes::EventTime::new(TimeFormat::Omit),
+                cmd: TaskCmd::ClearCache,
+            })
+            .unwrap();
     };
 }
 

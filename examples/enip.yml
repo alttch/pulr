@@ -7,6 +7,8 @@ timeout: 2
 beacon: 2
 # pull data from source 5 times per second
 freq: 5
+# re-send all events every N seconds even if no tags modified
+#resend: 10
 # output as nd-json
 output: ndjson
 # output time, valid format values are: rfc3339, raw / timestamp

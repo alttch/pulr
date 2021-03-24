@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::ffi;
 use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use pl::datatypes;
 use pl::datatypes::{GenDataType, GenDataTypeParse, ParseData};
@@ -82,6 +82,7 @@ pub fn run(
     cfg: String,
     timeout: Duration,
     interval: Duration,
+    resend_interval: Option<Duration>,
     core: pl::Core,
     beacon: &mut pl::Beacon,
 ) {
@@ -140,7 +141,14 @@ pub fn run(
         let t = w.t;
         let tag_id = match w.data {
             Some(v) => v,
-            None => break,
+            None => match w.cmd {
+                TaskCmd::ClearCache => {
+                    core.clear_event_cache();
+                    continue;
+                }
+                TaskCmd::Terminate => break,
+                _ => continue,
+            },
         };
         let i = w.work_id.unwrap();
         for d in dp_list.get(i).unwrap() {
@@ -193,7 +201,23 @@ pub fn run(
         }
     });
     // pulling loop
+    let mut resend_time = match resend_interval {
+        Some(v) => Some(Instant::now() + v),
+        None => None,
+    };
     loop {
+        match resend_time {
+            Some(ref mut v) => {
+                let t = Instant::now();
+                if t > *v {
+                    while t > *v {
+                        *v += resend_interval.unwrap();
+                    }
+                    clear_processor_cache!(processor, tx);
+                }
+            }
+            None => {}
+        };
         for work_id in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();
@@ -239,6 +263,7 @@ pub fn run(
                 data: Some(tag_id),
                 work_id: Some(work_id),
                 t: call_time,
+                cmd: TaskCmd::Process,
             })
             .unwrap();
         }

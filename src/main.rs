@@ -68,6 +68,7 @@ struct Config {
     #[serde(default = "get_default_beacon")]
     beacon: f32,
     freq: f64,
+    resend: Option<f32>,
     #[serde(
         default = "pl::datatypes::get_default_output",
         deserialize_with = "de_output"
@@ -132,21 +133,52 @@ fn main() {
     let timeout = Duration::from_millis((config.timeout * 1000 as f32) as u64);
     let beacon_interval = Duration::from_micros((config.beacon * 1_000_000.0) as u64);
     let interval = Duration::from_micros((1.0 / config.freq as f64 * 1_000_000.0) as u64);
+    let resend_interval = match config.resend {
+        Some(v) => Some(Duration::from_micros((v * 1_000_000.0) as u64)),
+        None => None,
+    };
     {
         let core = pl::Core::new(otp.0, otp.1, config.time_format);
         let mut beacon = pl::Beacon::new(otp.0, beacon_interval);
 
         match proto_name {
             "modbus" => {
-                ppmodbus::run(in_loop, verbose, cfg, timeout, interval, core, &mut beacon);
+                ppmodbus::run(
+                    in_loop,
+                    verbose,
+                    cfg,
+                    timeout,
+                    interval,
+                    resend_interval,
+                    core,
+                    &mut beacon,
+                );
                 ()
             }
             "enip" => {
-                ppenip::run(in_loop, verbose, cfg, timeout, interval, core, &mut beacon);
+                ppenip::run(
+                    in_loop,
+                    verbose,
+                    cfg,
+                    timeout,
+                    interval,
+                    resend_interval,
+                    core,
+                    &mut beacon,
+                );
                 ()
             }
             "snmp" => {
-                ppsnmp::run(in_loop, verbose, cfg, timeout, interval, core, &mut beacon);
+                ppsnmp::run(
+                    in_loop,
+                    verbose,
+                    cfg,
+                    timeout,
+                    interval,
+                    resend_interval,
+                    core,
+                    &mut beacon,
+                );
                 ()
             }
             _ => unimplemented!("protocol {}", proto_name),

@@ -130,6 +130,13 @@ impl Core {
             }
         });
     }
+
+    pub fn clear_event_cache(self) {
+        EVENT_CACHE.with(|event_cache_cell| {
+        let mut cache = event_cache_cell.borrow_mut();
+        cache.clear();
+        });
+    }
 }
 
 pub fn output_stdout<T: ToString>(event: &Event<T>) {
