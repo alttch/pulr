@@ -20,7 +20,7 @@ mod ppenip;
 mod ppsnmp;
 
 const HOMEPAGE: &str = "https://github.com/alttch/pulr";
-const VERSION: &str = "1.0.9";
+const VERSION: &str = "1.0.10";
 
 fn get_default_timeout() -> f32 {
     return 5.0;
