@@ -79,6 +79,7 @@ define_task_result!(i32);
 pub fn run(
     inloop: bool,
     verbose: bool,
+    verbose_warnings: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,
@@ -205,7 +206,11 @@ pub fn run(
         Some(v) => Some(Instant::now() + v),
         None => None,
     };
+    let mut pull_log: datatypes::PullLog = datatypes::PullLog::new();
     loop {
+        if verbose_warnings {
+            pull_log.clear();
+        }
         match resend_time {
             Some(ref mut v) => {
                 let t = Instant::now();
@@ -221,6 +226,10 @@ pub fn run(
         for work_id in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();
+            let mut pull_log_entry = match verbose_warnings {
+                true => Some(datatypes::PullLogEntry::new(&p.path)),
+                false => None,
+            };
             let tag_id = match active_tags.get(&p.path_hash) {
                 Some(v) => *v,
                 None => unsafe {
@@ -259,6 +268,7 @@ pub fn run(
                     panic!("{} read error {}", p.path, rc);
                 }
             }
+            log_pulled!(pull_log_entry);
             tx.send(TaskResult {
                 data: Some(tag_id),
                 work_id: Some(work_id),
@@ -266,12 +276,15 @@ pub fn run(
                 cmd: TaskCmd::Process,
             })
             .unwrap();
+            if verbose_warnings {
+                pull_log.push_entry(pull_log_entry.unwrap())
+            };
         }
         if !inloop {
             break;
         }
         beacon.ping();
-        pull_loop.sleep();
+        sleep_loop!(pull_loop, pull_log, verbose_warnings);
     }
     terminate_processor!(processor, tx);
 }

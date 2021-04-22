@@ -167,6 +167,7 @@ fn main() {
                 ppenip::run(
                     in_loop,
                     verbose,
+                    verbose_warnings,
                     cfg,
                     timeout,
                     interval,
