@@ -236,6 +236,12 @@ However it differs from the draft Python version:
 Before reporting a problem, try running Pulr with verbose output ("-v" command
 line flag).
 
+### Handling pull timeouts
+
+Run pulr as:
+
+    PULR_VERBOSE_WARNINGS=1 pulr <options>
+
 ## Bugs, feature requests, patches
 
 You welcome.
