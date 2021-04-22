@@ -133,8 +133,8 @@ impl Core {
 
     pub fn clear_event_cache(self) {
         EVENT_CACHE.with(|event_cache_cell| {
-        let mut cache = event_cache_cell.borrow_mut();
-        cache.clear();
+            let mut cache = event_cache_cell.borrow_mut();
+            cache.clear();
         });
     }
 }
@@ -202,8 +202,18 @@ impl IntervalLoop {
         };
     }
 
-    pub fn sleep(&mut self) {
-        self.next_iter.sleep_until();
-        self.next_iter = self.next_iter + self.interval;
+    pub fn sleep(&mut self) -> bool {
+        let result = self.next_iter.sleep_until();
+        if result {
+            self.next_iter = self.next_iter + self.interval;
+        } else {
+            tools::eprint(format!(
+                "WARNING: loop timeout ({} ms + {} ms)",
+                self.interval.as_micros() as f64 / 1000.0,
+                (Instant::now() - self.next_iter).as_micros() as f64 / 1000.0
+            ));
+            self.next_iter = Instant::now() + self.interval
+        }
+        result
     }
 }

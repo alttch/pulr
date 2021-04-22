@@ -66,16 +66,20 @@ pub fn eprint(content: String) {
 
 // sleep funcs
 pub trait SleepTricks {
-    fn sleep_until(&self) -> ();
+    // returns true if slept until, false if loop timeout
+    fn sleep_until(&self) -> bool;
 }
 
 impl SleepTricks for std::time::Instant {
-    fn sleep_until(&self) {
+    fn sleep_until(&self) -> bool {
         let t = Instant::now();
-        if t >= *self {
-            eprint("WARNING: loop timeout".to_owned());
+        if t > *self {
+            false
+        } else if t == *self {
+            true
         } else {
             sleep(*self - t);
+            true
         }
     }
 }

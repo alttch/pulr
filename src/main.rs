@@ -2,7 +2,7 @@
 use argparse::{ArgumentParser, Store, StoreTrue};
 use serde::{Deserialize, Deserializer};
 use std::time::Duration;
-use std::{fs, io, io::Read};
+use std::{env, fs, io, io::Read};
 
 use pl;
 
@@ -137,6 +137,13 @@ fn main() {
         Some(v) => Some(Duration::from_micros((v * 1_000_000.0) as u64)),
         None => None,
     };
+    let verbose_warnings = match env::var("PULR_VERBOSE_WARNINGS")
+        .unwrap_or("0".to_owned())
+        .as_str()
+    {
+        "1" => true,
+        _ => false,
+    };
     {
         let core = pl::Core::new(otp.0, otp.1, config.time_format);
         let mut beacon = pl::Beacon::new(otp.0, beacon_interval);
@@ -146,6 +153,7 @@ fn main() {
                 ppmodbus::run(
                     in_loop,
                     verbose,
+                    verbose_warnings,
                     cfg,
                     timeout,
                     interval,
@@ -172,6 +180,7 @@ fn main() {
                 ppsnmp::run(
                     in_loop,
                     verbose,
+                    verbose_warnings,
                     cfg,
                     timeout,
                     interval,

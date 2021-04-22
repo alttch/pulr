@@ -61,3 +61,25 @@ macro_rules! define_de_source {
         }
     };
 }
+
+#[macro_export]
+macro_rules! sleep_loop {
+    ($p:path, $l:path, $w:path) => {
+        if $p.sleep() == false {
+            if $w {
+                use pl::tools::eprint;
+                eprint($l.to_string())
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! log_pulled {
+    ($e:path) => {
+                match $e {
+                    Some(ref mut v) => v.pulled(),
+                    None => {}
+                };
+    }
+}

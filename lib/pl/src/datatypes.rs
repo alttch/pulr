@@ -6,7 +6,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::error::Error;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use transform;
 
 pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
@@ -352,5 +352,58 @@ impl ParseData for String {
                 .expect(&format!("unable to parse number from {}", self));
         }
         return a;
+    }
+}
+
+pub struct PullLog {
+    entries: Vec<PullLogEntry>,
+}
+
+impl PullLog {
+    pub fn new() -> Self {
+        PullLog {
+            entries: Vec::new(),
+        }
+    }
+
+    pub fn push_entry(&mut self, p: PullLogEntry) {
+        self.entries.push(p);
+    }
+
+    pub fn clear(&mut self) {
+        self.entries.clear();
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut result = "Time spent: ".to_owned();
+        for entry in &self.entries {
+            result += &format!("{}: ", entry.id);
+            match entry.spent {
+                Some(t) => result += &format!("{} ms", t.as_micros() as f64 / 1000.0),
+                None => result += "?",
+            }
+            result += ", ";
+        }
+        result
+    }
+}
+
+pub struct PullLogEntry {
+    id: String,
+    created: Instant,
+    spent: Option<Duration>,
+}
+
+impl PullLogEntry {
+    pub fn new(id: &str) -> Self {
+        PullLogEntry {
+            id: id.to_owned(),
+            created: Instant::now(),
+            spent: None,
+        }
+    }
+
+    pub fn pulled(&mut self) {
+        self.spent = Some(Instant::now() - self.created);
     }
 }

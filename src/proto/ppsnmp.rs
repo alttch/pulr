@@ -72,6 +72,7 @@ struct SNMPProcess {
 
 // TODO: move some fields to de_
 struct SNMPPullData {
+    label: String,
     oids: Vec<Vec<u32>>,
     non_repeat: u32,
     max_repeat: u32,
@@ -118,8 +119,8 @@ fn parse_snmp_val(value: snmp::Value) -> SNMPValue {
     };
 }
 
-fn prepare_oid(oid: String) -> String {
-    let mut res = oid;
+fn prepare_oid(oid: &String) -> String {
+    let mut res = oid.to_owned();
     if res.chars().next().unwrap() == '.' {
         res.remove(0);
     } else if res.starts_with("iso.") {
@@ -133,6 +134,7 @@ define_task_result!(HashMap<String, SNMPValue>);
 pub fn run(
     inloop: bool,
     verbose: bool,
+    verbose_warnings: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,
@@ -152,13 +154,13 @@ pub fn run(
         let mut process_data_vec: Vec<SNMPDataProcessInfo> = Vec::new();
         for prc in p.process {
             process_data_vec.push(SNMPDataProcessInfo {
-                oid: prepare_oid(prc.oid),
+                oid: prepare_oid(&prc.oid),
                 set_id: prc.set_id,
                 transform: prc.transform,
             });
         }
         let mut oids: Vec<Vec<u32>> = Vec::new();
-        for oid in p.oids {
+        for oid in &p.oids {
             oids.push(
                 prepare_oid(oid)
                     .split(".")
@@ -168,6 +170,7 @@ pub fn run(
         }
         let bulk: bool = p.max_repeat > 1 || oids.len() > 1;
         pulls.push(SNMPPullData {
+            label: format!("{:?}", p.oids),
             oids,
             non_repeat: p.non_repeat,
             max_repeat: p.max_repeat,
@@ -261,7 +264,11 @@ pub fn run(
         Some(v) => Some(Instant::now() + v),
         None => None,
     };
+    let mut pull_log: datatypes::PullLog = datatypes::PullLog::new();
     loop {
+        if verbose_warnings {
+            pull_log.clear();
+        }
         match resend_time {
             Some(ref mut v) => {
                 let t = Instant::now();
@@ -277,6 +284,10 @@ pub fn run(
         for work_id in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();
+            let mut pull_log_entry = match verbose_warnings {
+                true => Some(datatypes::PullLogEntry::new(&p.label)),
+                false => None,
+            };
             // TODO: move slices to prepare stage
             if p.bulk {
                 if verbose {
@@ -294,6 +305,7 @@ pub fn run(
                     result.insert(name.to_string(), parse_snmp_val(val));
                 }
                 debug_snmp_result!(result);
+                log_pulled!(pull_log_entry);
                 tx.send(TaskResult {
                     data: Some(result),
                     work_id: Some(work_id),
@@ -316,6 +328,7 @@ pub fn run(
                 let mut result: HashMap<String, SNMPValue> = HashMap::new();
                 result.insert(name.to_string(), parse_snmp_val(val));
                 debug_snmp_result!(result);
+                log_pulled!(pull_log_entry);
                 tx.send(TaskResult {
                     data: Some(result),
                     work_id: Some(work_id),
@@ -324,12 +337,15 @@ pub fn run(
                 })
                 .unwrap();
             }
+            if verbose_warnings {
+                pull_log.push_entry(pull_log_entry.unwrap())
+            };
         }
         if !inloop {
             break;
         }
+        sleep_loop!(pull_loop, pull_log, verbose_warnings);
         beacon.ping();
-        pull_loop.sleep();
     }
     terminate_processor!(processor, tx);
 }

@@ -118,6 +118,7 @@ struct ModbusDataProcessInfo {
 // TODO: move some fields to de_
 #[derive(Debug)]
 struct ModbusPullData {
+    label: String,
     tp: ModbusRegisterType,
     addr: u16,
     count: u16,
@@ -392,6 +393,7 @@ enum ModbusClient {
 pub fn run(
     inloop: bool,
     verbose: bool,
+    verbose_warnings: bool,
     cfg: String,
     timeout: Duration,
     interval: Duration,
@@ -451,6 +453,7 @@ pub fn run(
             panic!("Modbus unit not specified, neither in pull config, nor default");
         }
         pulls.push(ModbusPullData {
+            label: reg,
             tp: register_type,
             addr: addr as u16,
             count: p.count,
@@ -594,7 +597,11 @@ pub fn run(
         Some(v) => Some(Instant::now() + v),
         None => None,
     };
+    let mut pull_log: datatypes::PullLog = datatypes::PullLog::new();
     loop {
+        if verbose_warnings {
+            pull_log.clear();
+        }
         match resend_time {
             Some(ref mut v) => {
                 let t = Instant::now();
@@ -610,6 +617,10 @@ pub fn run(
         for i in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(i).unwrap();
+            let mut pull_log_entry = match verbose_warnings {
+                true => Some(datatypes::PullLogEntry::new(&p.label)),
+                false => None,
+            };
             if verbose {
                 pl::print_debug(&format!("reading registers {:?}", p));
             }
@@ -621,6 +632,7 @@ pub fn run(
                     read_discretes(&mut client, p.unit, p.addr, p.count)
                 }
             };
+            log_pulled!(pull_log_entry);
             tx.send(match data {
                 Ok(v) => {
                     if verbose {
@@ -636,12 +648,15 @@ pub fn run(
                 Err(err) => panic!("{:?}", err),
             })
             .unwrap();
+            if verbose_warnings {
+                pull_log.push_entry(pull_log_entry.unwrap());
+            }
         }
         if !inloop {
             break;
         }
         beacon.ping();
-        pull_loop.sleep()
+        sleep_loop!(pull_loop, pull_log, verbose_warnings);
     }
     terminate_processor!(processor, tx);
 }
