@@ -453,7 +453,7 @@ pub fn run(
             panic!("Modbus unit not specified, neither in pull config, nor default");
         }
         pulls.push(ModbusPullData {
-            label: reg,
+            label: p.reg,
             tp: register_type,
             addr: addr as u16,
             count: p.count,
