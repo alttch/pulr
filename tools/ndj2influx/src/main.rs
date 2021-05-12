@@ -8,7 +8,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const VERSION: &str = "0.0.3";
+const VERSION: &str = "0.0.4";
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &str) -> i64 {
     if let "@" = tcol {
