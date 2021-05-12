@@ -8,30 +8,29 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-
 const VERSION: &str = "0.0.3";
 
 fn parse_timestamp(map: &HashMap<String, serde_json::Value>, tcol: &str) -> i64 {
     if let "@" = tcol {
         SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_nanos() as i64
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_nanos() as i64
     } else {
         {
-                use serde_json::value::Value::{Number, String};
-                let t = map
-                    .get(tcol)
-                    .unwrap_or_else(|| panic!("Time column not found: {}", tcol));
-                match t {
-                    Number(v) => (v.as_f64().unwrap() * 1_000_000_000.0) as i64,
-                    String(v) => {
-                        let dt = DateTime::parse_from_rfc3339(&v).unwrap();
-                        dt.timestamp_nanos()
-                    }
-                    _ => panic!("time is in wrong format: {:?}", t),
+            use serde_json::value::Value::{Number, String};
+            let t = map
+                .get(tcol)
+                .unwrap_or_else(|| panic!("Time column not found: {}", tcol));
+            match t {
+                Number(v) => (v.as_f64().unwrap() * 1_000_000_000.0) as i64,
+                String(v) => {
+                    let dt = DateTime::parse_from_rfc3339(&v).unwrap();
+                    dt.timestamp_nanos()
                 }
+                _ => panic!("time is in wrong format: {:?}", t),
             }
+        }
     }
 }
 
@@ -106,7 +105,7 @@ fn main() {
     let mut basecol = String::new();
     let mut url = String::new();
     let mut database = String::new();
-    let mut bucket = String::new();
+    let mut org: Option<String> = None;
     let mut auth = match env::var("INFLUXDB_AUTH") {
         Ok(val) => val,
         Err(_) => String::new(),
@@ -127,15 +126,12 @@ fn main() {
             .add_argument("URL", Store, "InfluxDB URL:Port (without leading slash)")
             .required();
         ap.refer(&mut database)
-            .add_argument("DB", Store, "InfluxDB database name (or Organizaiton if v2)")
-            .required();
-        ap.refer(&mut bucket)
-            .add_option(
-                &["-B", "--bucket"],
+            .add_argument(
+                "DB",
                 Store,
-                "Bucket to store values",
+                "InfluxDB database name (for InfluxDB v2 specify as org/bucket)",
             )
-            .metavar("Bucket");
+            .required();
         ap.refer(&mut basecol)
             .add_argument(
                 "BASE",
@@ -147,7 +143,7 @@ fn main() {
             .add_option(
                 &["-U", "--user"],
                 Store,
-                "username:password, if required. (better use INFLUXDB_AUTH env variable)",
+                "username:password / auth token (better use INFLUXDB_AUTH env variable)",
             )
             .metavar("NAME");
         ap.refer(&mut time_col)
@@ -183,7 +179,19 @@ fn main() {
         );
         ap.parse_args_or_exit();
     }
-    let use_v2 = !bucket.is_empty();
+
+    let db: String;
+
+    if database.contains("/") {
+        let mut splitter = database.splitn(2, '/');
+
+        org = Some(splitter.next().unwrap().to_owned());
+        db = splitter.next().unwrap().to_owned();
+    } else {
+        db = database;
+    }
+
+    let use_v2 = org.is_some();
 
     let base = match basecol.chars().next().unwrap() {
         '@' => &basecol[1..basecol.len()],
@@ -199,9 +207,9 @@ fn main() {
     }
 
     let influx_write_url = if use_v2 {
-        format!("{}/api/v2/write?org={}&bucket={}", url, database, bucket)
+        format!("{}/api/v2/write?org={}&bucket={}", url, org.unwrap(), db)
     } else {
-        format!("{}/write?db={}", url, database)
+        format!("{}/write?db={}", url, db)
     };
 
     let timeout = Duration::from_millis((timeout_f * 1000_f32) as u64);
