@@ -22,6 +22,10 @@ mod ppsnmp;
 const HOMEPAGE: &str = "https://github.com/alttch/pulr";
 const VERSION: &str = "1.0.11";
 
+fn get_default_event_timeout() -> f32 {
+    return 0.0;
+}
+
 fn get_default_timeout() -> f32 {
     return 5.0;
 }
@@ -65,6 +69,8 @@ struct Config {
     version: u16,
     #[serde(default = "get_default_timeout")]
     timeout: f32,
+    #[serde(alias = "event-timeout", default = "get_default_event_timeout")]
+    event_timeout: f32,
     #[serde(default = "get_default_beacon")]
     beacon: f32,
     freq: f64,
@@ -145,7 +151,15 @@ fn main() {
         _ => false,
     };
     {
-        let core = pl::Core::new(otp.0, otp.1, config.time_format);
+        let etimeout: Option<Duration>;
+        if config.event_timeout > 0.0 {
+            etimeout = Some(Duration::from_micros(
+                (config.event_timeout as f64 * 1_000_000.0) as u64,
+            ));
+        } else {
+            etimeout = None;
+        }
+        let core = pl::Core::new(otp.0, otp.1, config.time_format, etimeout);
         let mut beacon = pl::Beacon::new(otp.0, beacon_interval);
 
         match proto_name {

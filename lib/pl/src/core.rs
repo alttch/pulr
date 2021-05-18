@@ -3,6 +3,9 @@ pub mod datatypes;
 #[path = "tools.rs"]
 pub mod tools;
 
+#[macro_use]
+extern crate lazy_static;
+
 use tools::SleepTricks;
 
 use colored::*;
@@ -13,6 +16,8 @@ use std::collections::HashMap;
 use datatypes::{Event, OutputType};
 use tools::oprint;
 use transform;
+
+use std::sync::RwLock;
 
 pub fn init() {
     #[cfg(windows)]
@@ -57,14 +62,39 @@ impl Beacon {
     }
 }
 
+pub struct EventTimer {
+    last_event_time: Instant,
+}
+
+impl EventTimer {
+    pub fn new() -> Self {
+        Self {
+            last_event_time: Instant::now(),
+        }
+    }
+
+    pub fn trigger(&mut self) {
+        self.last_event_time = Instant::now();
+    }
+
+    pub fn since_event(&self) -> Duration {
+        Instant::now() - self.last_event_time
+    }
+}
+
 use std::cell::RefCell;
 thread_local!(static EVENT_CACHE: RefCell<HashMap<u64, String>> = RefCell::new(HashMap::new()));
+
+lazy_static! {
+    static ref EVENT_TIMER: RwLock<EventTimer> = RwLock::new(EventTimer::new());
+}
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct Core {
     tp: OutputType,
     event_output_flags: datatypes::OutputFlags,
     time_format: datatypes::TimeFormat,
+    event_timeout: Option<Duration>,
 }
 
 impl Core {
@@ -72,12 +102,17 @@ impl Core {
         output_type: OutputType,
         event_output_flags: datatypes::OutputFlags,
         time_format: datatypes::TimeFormat,
+        event_timeout: Option<Duration>,
     ) -> Self {
-        return Self {
+        if event_timeout.is_some() {
+            EVENT_TIMER.write().unwrap().trigger();
+        }
+        Self {
             tp: output_type,
             event_output_flags,
             time_format,
-        };
+            event_timeout,
+        }
     }
 
     pub fn create_event_time(self) -> datatypes::EventTime {
@@ -101,6 +136,20 @@ impl Core {
         self._output(event, 0);
     }
 
+    pub fn since_event(self) -> Option<Duration> {
+        match self.event_timeout {
+            Some(_) => Some(EVENT_TIMER.read().unwrap().since_event()),
+            None => None,
+        }
+    }
+
+    pub fn is_event_timeout(self) -> bool {
+        match self.event_timeout {
+            Some(v) => EVENT_TIMER.read().unwrap().since_event() > v,
+            None => false,
+        }
+    }
+
     fn _output<T: serde::Serialize + std::fmt::Display + transform::Transform>(
         self,
         event: &Event<T>,
@@ -121,6 +170,9 @@ impl Core {
             let prev = cache.get(&event.id_hash);
             if !prev.is_some() || *prev.unwrap() != val {
                 cache.insert(event.id_hash, val);
+                if self.event_timeout.is_some() {
+                    EVENT_TIMER.write().unwrap().trigger();
+                }
                 match self.tp {
                     OutputType::Stdout => output_stdout(event),
                     OutputType::StdoutCsv => output_stdout_csv(event),

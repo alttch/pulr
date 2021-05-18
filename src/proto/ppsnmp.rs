@@ -341,7 +341,7 @@ pub fn run(
                 pull_log.push_entry(pull_log_entry.unwrap())
             };
         }
-        if !inloop {
+        if !inloop || core.is_event_timeout() {
             break;
         }
         sleep_loop!(pull_loop, pull_log, verbose_warnings);

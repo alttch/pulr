@@ -2,6 +2,8 @@
 #
 version: 2
 timeout: 2
+# stop if no events happened for the last 30 seconds
+#event-timeout: 30
 # print empty line every 2 seconds
 beacon: 2
 # pull data from source 2 times per second
