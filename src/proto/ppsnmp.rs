@@ -344,8 +344,8 @@ pub fn run(
         if !inloop || core.is_event_timeout() {
             break;
         }
-        sleep_loop!(pull_loop, pull_log, verbose_warnings);
         beacon.ping();
+        sleep_loop!(pull_loop, pull_log, verbose_warnings);
     }
     terminate_processor!(processor, tx);
 }
