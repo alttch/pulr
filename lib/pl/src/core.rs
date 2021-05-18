@@ -34,7 +34,7 @@ impl Beacon {
     pub fn new(output_type: OutputType, beacon_interval: Duration) -> Self {
         return Beacon {
             tp: output_type,
-            beacon_interval: beacon_interval,
+            beacon_interval,
             next_beacon: Instant::now() + beacon_interval,
             enabled: beacon_interval.as_micros() > 0,
         };
@@ -75,8 +75,8 @@ impl Core {
     ) -> Self {
         return Self {
             tp: output_type,
-            event_output_flags: event_output_flags,
-            time_format: time_format,
+            event_output_flags,
+            time_format,
         };
     }
 
@@ -198,7 +198,7 @@ impl IntervalLoop {
     pub fn new(interval: Duration) -> Self {
         return IntervalLoop {
             next_iter: Instant::now() + interval,
-            interval: interval,
+            interval,
         };
     }
 
