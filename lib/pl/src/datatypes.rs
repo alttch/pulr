@@ -304,6 +304,7 @@ impl GenDataTypeParse for String {
     }
 }
 
+#[derive(Debug)]
 pub struct DataOffset {
     pub offset: usize,
     pub bit: Option<u8>,

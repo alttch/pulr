@@ -49,10 +49,14 @@ struct EnIpPull {
     process: Vec<EnIpProcess>,
 }
 
+fn get_default_type() -> String {
+    return "bit".to_owned();
+}
+
 #[derive(Deserialize)]
 struct EnIpProcess {
     offset: String,
-    #[serde(alias = "type")]
+    #[serde(alias = "type", default = "get_default_type")]
     r#type: String,
     #[serde(alias = "set-id")]
     set_id: String,
@@ -68,13 +72,21 @@ struct EnIpPullData {
 
 // TODO: move some fields to de_
 struct EnIpDataProcessInfo {
-    offset: u32,
+    offset: datatypes::DataOffset,
     tp: datatypes::GenDataType,
     set_id: String,
     transform: datatypes::EventTransformList,
 }
 
 define_task_result!(i32);
+
+fn safe_get_bit(tag: i32, bit_offset: i32) -> u8 {
+    let result = unsafe { plctag::plc_tag_get_bit(tag, bit_offset) };
+    if result < 0 {
+        panic!("libplctag error {}", result);
+    }
+    result as u8
+}
 
 pub fn run(
     inloop: bool,
@@ -110,8 +122,20 @@ pub fn run(
     for p in config.pull {
         let mut process_data_vec: Vec<EnIpDataProcessInfo> = Vec::new();
         for prc in p.process {
-            let offset = prc.offset.safe_parse_u32();
-            let tp = prc.r#type.parse_data_type();
+            let mut offset = prc.offset.parse_data_offset(0);
+            let tp = match offset.bit {
+                Some(_) => {
+                    offset.offset = offset.offset * 8;
+                    datatypes::GenDataType::Bit
+                }
+                None => {
+                    let p = prc.r#type.parse_data_type();
+                    if p == datatypes::GenDataType::Bit {
+                        panic!("data type not specified");
+                    }
+                    p
+                }
+            };
             process_data_vec.push(EnIpDataProcessInfo {
                 offset,
                 set_id: prc.set_id,
@@ -154,50 +178,49 @@ pub fn run(
         let i = w.work_id.unwrap();
         for d in dp_list.get(i).unwrap() {
             macro_rules! process_tag {
-                ($fn:path) => {
-                    unsafe {
-                        let event = core.create_event(
-                            &d.set_id,
-                            $fn(tag_id, d.offset as i32),
-                            &d.transform,
-                            &t,
-                        );
-                        core.output(&event);
-                    }
+                ($fn:path, $offset:expr) => {
+                    let event =
+                        core.create_event(&d.set_id, $fn(tag_id, $offset as i32), &d.transform, &t);
+                    core.output(&event);
                 };
             }
             match d.tp {
-                GenDataType::Uint8 => {
-                    process_tag!(plctag::plc_tag_get_uint8);
-                }
-                GenDataType::Int8 => {
-                    process_tag!(plctag::plc_tag_get_int8);
-                }
-                GenDataType::Uint16 => {
-                    process_tag!(plctag::plc_tag_get_uint16);
-                }
-                GenDataType::Int16 => {
-                    process_tag!(plctag::plc_tag_get_int16);
-                }
-                GenDataType::Uint32 => {
-                    process_tag!(plctag::plc_tag_get_uint32);
-                }
-                GenDataType::Int32 => {
-                    process_tag!(plctag::plc_tag_get_int32);
-                }
-                GenDataType::Uint64 => {
-                    process_tag!(plctag::plc_tag_get_uint64);
-                }
-                GenDataType::Int64 => {
-                    process_tag!(plctag::plc_tag_get_int64);
-                }
-                GenDataType::Real32 => {
-                    process_tag!(plctag::plc_tag_get_float32);
-                }
-                GenDataType::Real64 => {
-                    process_tag!(plctag::plc_tag_get_float64);
-                }
-                _ => unimplemented!("data type unimplemented: {}", d.tp),
+                GenDataType::Uint8 => unsafe {
+                    process_tag!(plctag::plc_tag_get_uint8, d.offset.offset);
+                },
+                GenDataType::Int8 => unsafe {
+                    process_tag!(plctag::plc_tag_get_int8, d.offset.offset);
+                },
+                GenDataType::Uint16 => unsafe {
+                    process_tag!(plctag::plc_tag_get_uint16, d.offset.offset);
+                },
+                GenDataType::Int16 => unsafe {
+                    process_tag!(plctag::plc_tag_get_int16, d.offset.offset);
+                },
+                GenDataType::Uint32 => unsafe {
+                    process_tag!(plctag::plc_tag_get_uint32, d.offset.offset);
+                },
+                GenDataType::Int32 => unsafe {
+                    process_tag!(plctag::plc_tag_get_int32, d.offset.offset);
+                },
+                GenDataType::Uint64 => unsafe {
+                    process_tag!(plctag::plc_tag_get_uint64, d.offset.offset);
+                },
+                GenDataType::Int64 => unsafe {
+                    process_tag!(plctag::plc_tag_get_int64, d.offset.offset);
+                },
+                GenDataType::Real32 => unsafe {
+                    process_tag!(plctag::plc_tag_get_float32, d.offset.offset);
+                },
+                GenDataType::Real64 => unsafe {
+                    process_tag!(plctag::plc_tag_get_float64, d.offset.offset);
+                },
+                GenDataType::Bit => {
+                    process_tag!(
+                        safe_get_bit,
+                        d.offset.offset as u32 + d.offset.bit.unwrap() as u32
+                    );
+                } //_ => unimplemented!("data type unimplemented: {}", d.tp),
             }
         }
     });
