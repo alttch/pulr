@@ -61,6 +61,13 @@ pull:
       - offset: 8
         set-id: MyStruct.ChildStructA.TagC
         type: real
+      # fetch individual bits. tag type must be set to "bit" or can be omitted
+      - offset: 10/0
+        set-id: MyStruct.ChildStructA.TagD.0
+      - offset: 10/1
+        set-id: MyStruct.ChildStructA.TagD.1
+      - offset: 10/2
+        set-id: MyStruct.ChildStructA.TagD.2
       # second child structure tags
       # to make offsets more useful, it's possible to write them as X+Y,
       # where X is the structure offset and Y is a tag offset
