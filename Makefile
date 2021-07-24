@@ -8,7 +8,6 @@ clean:
 	rm -f /tmp/pulr.*
 
 debug:
-	cp -vf build-x86_64.rs build.rs
 	cargo build
 
 tag:
