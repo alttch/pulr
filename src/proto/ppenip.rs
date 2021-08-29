@@ -9,8 +9,6 @@ use std::time::{Duration, Instant, SystemTime};
 use pl::datatypes;
 use pl::datatypes::{GenDataType, GenDataTypeParse, ParseData};
 
-use plctag;
-
 const DEFAULT_ENIP_PORT: u16 = 44818;
 const PLC_SLEEP_STEP: u32 = 10_000_000;
 
@@ -32,11 +30,11 @@ struct EnIpProto {
 }
 
 fn get_default_size() -> u32 {
-    return 1;
+    1
 }
 
 fn get_default_count() -> Option<u32> {
-    return None;
+    None
 }
 
 #[derive(Deserialize)]
@@ -50,7 +48,7 @@ struct EnIpPull {
 }
 
 fn get_default_type() -> String {
-    return "bit".to_owned();
+    "bit".to_owned()
 }
 
 #[derive(Deserialize)]
@@ -88,6 +86,7 @@ fn safe_get_bit(tag: i32, bit_offset: i32) -> u8 {
     result as u8
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     inloop: bool,
     verbose: bool,
@@ -125,7 +124,7 @@ pub fn run(
             let mut offset = prc.offset.parse_data_offset(0);
             let tp = match offset.bit {
                 Some(_) => {
-                    offset.offset = offset.offset * 8;
+                    offset.offset *= 8;
                     datatypes::GenDataType::Bit
                 }
                 None => {
@@ -225,27 +224,21 @@ pub fn run(
         }
     });
     // pulling loop
-    let mut resend_time = match resend_interval {
-        Some(v) => Some(Instant::now() + v),
-        None => None,
-    };
+    let mut resend_time = resend_interval.map(|v| Instant::now() + v);
     let mut pull_log: datatypes::PullLog = datatypes::PullLog::new();
     loop {
         if verbose_warnings {
             pull_log.clear();
         }
-        match resend_time {
-            Some(ref mut v) => {
-                let t = Instant::now();
-                if t > *v {
-                    while t > *v {
-                        *v += resend_interval.unwrap();
-                    }
-                    clear_processor_cache!(processor, tx);
+        if let Some(ref mut v) = resend_time {
+            let t = Instant::now();
+            if t > *v {
+                while t > *v {
+                    *v += resend_interval.unwrap();
                 }
+                clear_processor_cache!(processor, tx);
             }
-            None => {}
-        };
+        }
         for work_id in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();

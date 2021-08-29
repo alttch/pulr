@@ -3,6 +3,7 @@ use serde::{Deserialize, Deserializer};
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, UdpSocket};
 
+use std::panic::panic_any;
 use std::sync::mpsc;
 
 use ieee754::Ieee754;
@@ -39,7 +40,7 @@ struct ModbusConfig {
 define_de_source!(DEFAULT_MODBUS_PORT);
 
 fn get_default_unit() -> u8 {
-    return 0;
+    0
 }
 
 #[derive(Deserialize)]
@@ -61,7 +62,7 @@ struct ModbusPull {
 }
 
 fn get_default_type() -> String {
-    return "word".to_owned();
+    "word".to_owned()
 }
 
 #[derive(Deserialize)]
@@ -163,19 +164,17 @@ impl TcpClient {
     fn new(host: &str, port: u16, timeout: Duration) -> Result<Self, ErrorKind> {
         let addr: SocketAddr = format!("{}:{}", host, port).parse().unwrap();
         let stream = TcpStream::connect_timeout(&addr, timeout);
-        if stream.is_err() {
-            Err(ErrorKind::ServerError)
-        } else {
-            {
-                let s = stream.unwrap();
+        stream.map_or_else(
+            |_| Err(ErrorKind::ServerError),
+            |s| {
                 s.set_read_timeout(Some(timeout)).unwrap();
                 s.set_write_timeout(Some(timeout)).unwrap();
                 Ok(Self {
                     stream: s,
                     tr_id: 1,
                 })
-            }
-        }
+            },
+        )
     }
 }
 
@@ -185,28 +184,23 @@ impl UdpClient {
         let target: SocketAddr = format!("{}:{}", host, port).parse().unwrap();
         for i in 20000..60000 {
             let bind_addr: SocketAddr = format!("0.0.0.0:{}", i).parse().unwrap();
-            match UdpSocket::bind(bind_addr) {
-                Ok(v) => {
-                    socket = Some(v);
-                    break;
-                }
-                Err(_) => {}
+            if let Ok(v) = UdpSocket::bind(bind_addr) {
+                socket = Some(v);
+                break;
             }
         }
-        if socket.is_none() {
-            Err(ErrorKind::UdpBindError)
-        } else {
-            {
-                let s = socket.unwrap();
+        socket.map_or_else(
+            || Err(ErrorKind::UdpBindError),
+            |s| {
                 s.set_read_timeout(Some(timeout)).unwrap();
                 s.set_write_timeout(Some(timeout)).unwrap();
                 Ok(Self {
                     socket: s,
                     tr_id: 1,
-                    target: target,
+                    target,
                 })
-            }
-        }
+            },
+        )
     }
 }
 
@@ -217,7 +211,7 @@ trait ModbusNetworkClient {
 
 impl ModbusNetworkClient for TcpClient {
     fn process_request(&mut self, request: &[u8]) -> Result<Vec<u8>, rmodbus::ErrorKind> {
-        if self.stream.write(&request).is_err() {
+        if self.stream.write(request).is_err() {
             return Err(rmodbus::ErrorKind::CommunicationError);
         }
         let mut buf = [0u8; 6];
@@ -390,6 +384,7 @@ enum ModbusClient {
     Udp(UdpClient),
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     inloop: bool,
     verbose: bool,
@@ -450,7 +445,7 @@ pub fn run(
             unit = config.proto.unit;
         }
         if unit == 0 {
-            panic!("Modbus unit not specified, neither in pull config, nor default");
+            panic_any("Modbus unit not specified, neither in pull config, nor default");
         }
         pulls.push(ModbusPullData {
             label: p.reg,
@@ -523,14 +518,12 @@ pub fn run(
                     core.output(&event);
                 }
                 GenDataType::Int32 => {
-                    let v1 = match v.get(d.offset.offset as usize) {
-                        Some(z) => z,
-                        None => panic!(ERROR_OOB),
-                    };
-                    let v2 = match v.get((d.offset.offset + 1) as usize) {
-                        Some(z) => z,
-                        None => panic!(ERROR_OOB),
-                    };
+                    let v1 = v
+                        .get(d.offset.offset as usize)
+                        .unwrap_or_else(|| panic_any(ERROR_OOB));
+                    let v2 = v
+                        .get((d.offset.offset + 1) as usize)
+                        .unwrap_or_else(|| panic_any(ERROR_OOB));
                     let event = core.create_event(
                         &d.set_id,
                         (*v1 as u32 * 65536 + *v2 as u32) as i32,
@@ -576,14 +569,12 @@ pub fn run(
                     core.output(&event);
                 }
                 GenDataType::Real32 => {
-                    let v1 = match v.get(d.offset.offset as usize) {
-                        Some(z) => z,
-                        None => panic!(ERROR_OOB),
-                    };
-                    let v2 = match v.get((d.offset.offset + 1) as usize) {
-                        Some(z) => z,
-                        None => panic!(ERROR_OOB),
-                    };
+                    let v1 = v
+                        .get(d.offset.offset as usize)
+                        .unwrap_or_else(|| panic_any(ERROR_OOB));
+                    let v2 = v
+                        .get((d.offset.offset + 1) as usize)
+                        .unwrap_or_else(|| panic_any(ERROR_OOB));
                     let val: f32 = Ieee754::from_bits(*v2 as u32 * 65536 + *v1 as u32);
                     let event = core.create_event(&d.set_id, val, &d.transform, &t);
                     core.output(&event);
@@ -593,27 +584,21 @@ pub fn run(
         }
     });
     // pulling loop
-    let mut resend_time = match resend_interval {
-        Some(v) => Some(Instant::now() + v),
-        None => None,
-    };
+    let mut resend_time = resend_interval.map(|v| Instant::now() + v);
     let mut pull_log: datatypes::PullLog = datatypes::PullLog::new();
     loop {
         if verbose_warnings {
             pull_log.clear();
         }
-        match resend_time {
-            Some(ref mut v) => {
-                let t = Instant::now();
-                if t > *v {
-                    while t > *v {
-                        *v += resend_interval.unwrap();
-                    }
-                    clear_processor_cache!(processor, tx);
+        if let Some(ref mut v) = resend_time {
+            let t = Instant::now();
+            if t > *v {
+                while t > *v {
+                    *v += resend_interval.unwrap();
                 }
+                clear_processor_cache!(processor, tx);
             }
-            None => {}
-        };
+        }
         for i in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(i).unwrap();

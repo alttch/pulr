@@ -4,8 +4,6 @@ use serde::{Deserialize, Deserializer};
 use std::time::Duration;
 use std::{env, fs, io, io::Read};
 
-use pl;
-
 #[path = "proto/common.rs"]
 #[macro_use]
 mod common;
@@ -23,15 +21,15 @@ const HOMEPAGE: &str = "https://github.com/alttch/pulr";
 const VERSION: &str = "1.0.13";
 
 fn get_default_event_timeout() -> f32 {
-    return 0.0;
+    0.0
 }
 
 fn get_default_timeout() -> f32 {
-    return 5.0;
+    5.0
 }
 
 fn get_default_beacon() -> f32 {
-    return 2.0;
+    2.0
 }
 
 const CFG_VERSION_MIN: u16 = 2;
@@ -131,25 +129,18 @@ fn main() {
     if config.version < CFG_VERSION_MIN || config.version > CFG_VERSION_MAX {
         panic!("configuration version {} is unsupported", config.version);
     }
-    let proto_name = config.proto.name.split("/").next().unwrap();
+    let proto_name = config.proto.name.split('/').next().unwrap();
     let mut otp = config.output;
-    if output_type != "" {
+    if !output_type.is_empty() {
         otp = pl::datatypes::get_output_type(&output_type).unwrap();
     }
-    let timeout = Duration::from_millis((config.timeout * 1000 as f32) as u64);
+    let timeout = Duration::from_millis((config.timeout * 1_000f32) as u64);
     let beacon_interval = Duration::from_micros((config.beacon * 1_000_000.0) as u64);
     let interval = Duration::from_micros((1.0 / config.freq as f64 * 1_000_000.0) as u64);
-    let resend_interval = match config.resend {
-        Some(v) => Some(Duration::from_micros((v * 1_000_000.0) as u64)),
-        None => None,
-    };
-    let verbose_warnings = match env::var("PULR_VERBOSE_WARNINGS")
-        .unwrap_or("0".to_owned())
-        .as_str()
-    {
-        "1" => true,
-        _ => false,
-    };
+    let resend_interval = config
+        .resend
+        .map(|v| Duration::from_micros((v * 1_000_000.0) as u64));
+    let verbose_warnings = env::var("PULR_VERBOSE_WARNINGS").map_or(false, |v| v == "1");
     {
         let etimeout: Option<Duration>;
         if config.event_timeout > 0.0 {
@@ -175,7 +166,6 @@ fn main() {
                     core,
                     &mut beacon,
                 );
-                ()
             }
             "enip" => {
                 ppenip::run(
@@ -189,7 +179,6 @@ fn main() {
                     core,
                     &mut beacon,
                 );
-                ()
             }
             "snmp" => {
                 ppsnmp::run(
@@ -203,10 +192,8 @@ fn main() {
                     core,
                     &mut beacon,
                 );
-                ()
             }
             _ => unimplemented!("protocol {}", proto_name),
         }
     }
-    return;
 }

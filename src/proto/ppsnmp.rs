@@ -7,8 +7,6 @@ use std::time::{Duration, Instant};
 
 use pl::datatypes;
 
-use snmp;
-
 const DEFAULT_SNMP_PORT: u16 = 161;
 
 #[derive(Deserialize)]
@@ -18,11 +16,11 @@ struct SNMPConfig {
 }
 
 fn get_default_version() -> u8 {
-    return 2;
+    2
 }
 
 fn get_default_community() -> String {
-    return "public".to_string();
+    "public".to_string()
 }
 
 define_de_source!(DEFAULT_SNMP_PORT);
@@ -39,11 +37,11 @@ struct SNMPProto {
 }
 
 fn get_default_non_repeat() -> u32 {
-    return 0;
+    0
 }
 
 fn get_default_max_repeat() -> u32 {
-    return 1;
+    1
 }
 
 #[derive(Deserialize)]
@@ -58,7 +56,7 @@ struct SNMPPull {
 }
 
 fn get_default_set_id() -> Option<String> {
-    return None;
+    None
 }
 
 #[derive(Deserialize)]
@@ -119,18 +117,19 @@ fn parse_snmp_val(value: snmp::Value) -> SNMPValue {
     };
 }
 
-fn prepare_oid(oid: &String) -> String {
+fn prepare_oid(oid: &str) -> String {
     let mut res = oid.to_owned();
-    if res.chars().next().unwrap() == '.' {
+    if res.starts_with('.') {
         res.remove(0);
     } else if res.starts_with("iso.") {
         res = "1.".to_string() + &res[4..];
     }
-    return res;
+    res
 }
 
 define_task_result!(HashMap<String, SNMPValue>);
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     inloop: bool,
     verbose: bool,
@@ -163,7 +162,7 @@ pub fn run(
         for oid in &p.oids {
             oids.push(
                 prepare_oid(oid)
-                    .split(".")
+                    .split('.')
                     .map(|s| s.parse::<u32>().unwrap())
                     .collect(),
             );
@@ -243,7 +242,7 @@ pub fn run(
                             process_snmp_result!(id, v);
                         }
                         SStr(v) => {
-                            let event = core.create_event(&id, v.to_owned(), &d.transform, &t);
+                            let event = core.create_event(id, v.to_owned(), &d.transform, &t);
                             core.output(&event);
                         }
                         SNull => {
@@ -260,27 +259,21 @@ pub fn run(
         }
     });
     // pulling loop
-    let mut resend_time = match resend_interval {
-        Some(v) => Some(Instant::now() + v),
-        None => None,
-    };
+    let mut resend_time = resend_interval.map(|v| Instant::now() + v);
     let mut pull_log: datatypes::PullLog = datatypes::PullLog::new();
     loop {
         if verbose_warnings {
             pull_log.clear();
         }
-        match resend_time {
-            Some(ref mut v) => {
-                let t = Instant::now();
-                if t > *v {
-                    while t > *v {
-                        *v += resend_interval.unwrap();
-                    }
-                    clear_processor_cache!(processor, tx);
+        if let Some(ref mut v) = resend_time {
+            let t = Instant::now();
+            if t > *v {
+                while t > *v {
+                    *v += resend_interval.unwrap();
                 }
+                clear_processor_cache!(processor, tx);
             }
-            None => {}
-        };
+        }
         for work_id in 0..pulls.len() {
             let call_time = core.create_event_time();
             let p = pulls.get(work_id).unwrap();
@@ -320,11 +313,11 @@ pub fn run(
                 }
                 let mut response = sess
                     .getnext(o.as_slice())
-                    .expect(&format!("SNMP GET error {:?}", o));
+                    .unwrap_or_else(|_| panic!("SNMP GET error {:?}", o));
                 let (name, val) = response
                     .varbinds
                     .next()
-                    .expect(&format!("SNMP GET parse error {:?}", o));
+                    .unwrap_or_else(|| panic!("SNMP GET parse error {:?}", o));
                 let mut result: HashMap<String, SNMPValue> = HashMap::new();
                 result.insert(name.to_string(), parse_snmp_val(val));
                 debug_snmp_result!(result);
