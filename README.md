@@ -1,5 +1,8 @@
 # Pulr - pull fieldbus devices and generate events
 
+NOTE: the project is no longer supported. All the functionality has been
+integrated in [EVA ICS v4](https://www.eva-ics.com/).
+
 <img src="https://img.shields.io/badge/license-Apache%202.0-green" /> <img
 src="https://img.shields.io/badge/rust-2018-pink.svg" />
 
